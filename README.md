@@ -1,23 +1,22 @@
 # Eventsapibeat
 
-Eventsapibeat is the open source beats shipper for pulling events from the 1Password Events API.  
+Eventsapibeat is the open source libbeat based data shipper for pulling events from the 1Password Events API.  
 This beat will fetch successful and failed sign-in attempts and items usage data from public 1Password Events API.
 
 ## Installation
 
-Build and install the binary for your system.
+Download the latest binaries from [the releases page](https://github.com/1Password/events-api-elastic/releases/latest).  
+Or build from sources (_resulting packages will be located at _bin_ folder_):  
 
 ```shell
 make build_all_apps
 ```
 
-Resulting packages will be located at _bin_ folder.
-
 ## Configuration
 
 Rename the sample configuration file _eventsapibeat-sample.yml_ to _eventsapibeat.yml_.
 
-Configure the `api_host` and `auth_token` after you create a 1Password Events API integration for your account in https://1Password.com.
+Create a [1Password Events Reporting](https://support.1password.com/events-reporting-elastic/) integration for your account and configure the `api_host` and `auth_token`.  
 
 ```yaml
 api_host: "https://events.1password.com"
