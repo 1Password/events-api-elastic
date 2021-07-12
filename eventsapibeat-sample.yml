@@ -1,5 +1,4 @@
 eventsapibeat:
-  api_host: "https://events.1password.com"
   insecure_skip_verify: false
   signin_attempts:
     enabled: true

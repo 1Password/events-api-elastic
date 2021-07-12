@@ -2,21 +2,16 @@ package config
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 )
 
 type Config struct {
-	APIHost            string      `config:"api_host"`
 	InsecureSkipVerify bool        `config:"insecure_skip_verify"`
 	SignInAttempts     EventConfig `config:"signin_attempts"`
 	ItemUsages         EventConfig `config:"item_usages"`
 }
 
 func (c *Config) Validate() error {
-	if _, err := url.Parse(c.APIHost); err != nil {
-		return fmt.Errorf("invalid api_host. %w", err)
-	}
 	if err := c.SignInAttempts.Validate(); err != nil {
 		return fmt.Errorf("invalid signin_attempts. %w", err)
 	}
@@ -27,7 +22,6 @@ func (c *Config) Validate() error {
 }
 
 var DefaultConfig = Config{
-	APIHost:            "https://events.1password.com",
 	InsecureSkipVerify: false,
 	SignInAttempts: EventConfig{
 		Enabled:         false,

@@ -9,17 +9,18 @@ import (
 	"strings"
 	"time"
 
+	"go.1password.io/eventsapibeat/utils"
 	"go.1password.io/eventsapibeat/version"
 )
 
 const (
-	DefaultTimeout   = 30 * time.Second
+	DefaultTimeout = 30 * time.Second
 )
+
 var DefaultUserAgent = "1Password Events API Beats / " + version.Version
 
 type Client struct {
 	httpClient *http.Client
-	APIHost    string
 }
 
 type SignInAttemptResponse struct {
@@ -84,13 +85,12 @@ type IntrospectResponse struct {
 	Features []string  `json:"Features"`
 }
 
-func NewClient(apiHost string, transport http.RoundTripper) (*Client, error) {
+func NewClient(transport http.RoundTripper) (*Client, error) {
 	return &Client{
 		httpClient: &http.Client{
 			Timeout:   DefaultTimeout,
 			Transport: transport,
 		},
-		APIHost: apiHost,
 	}, nil
 }
 
@@ -99,7 +99,10 @@ func (c *Client) HTTPClient() *http.Client {
 }
 
 func (c *Client) Introspect(ctx context.Context, bearerToken string) (*IntrospectResponse, error) {
-	request := c.newAPIRequest(ctx, http.MethodGet, bearerToken, "/api/auth/introspect", nil)
+	request, err := c.newAPIRequest(ctx, http.MethodGet, bearerToken, "/api/auth/introspect", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new API request. %w", err)
+	}
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -120,7 +123,10 @@ func (c *Client) Introspect(ctx context.Context, bearerToken string) (*Introspec
 }
 
 func (c *Client) SignInAttempts(ctx context.Context, bearerToken string, cursor string) (*SignInAttemptResponse, error) {
-	request := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/signinattempts", strings.NewReader(cursor))
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/signinattempts", strings.NewReader(cursor))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new API request. %w", err)
+	}
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -141,7 +147,10 @@ func (c *Client) SignInAttempts(ctx context.Context, bearerToken string, cursor 
 }
 
 func (c *Client) ItemUsages(ctx context.Context, bearerToken string, cursor string) (*ItemUsageResponse, error) {
-	request := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/itemusages", strings.NewReader(cursor))
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/itemusages", strings.NewReader(cursor))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new API request. %w", err)
+	}
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -161,9 +170,19 @@ func (c *Client) ItemUsages(ctx context.Context, bearerToken string, cursor stri
 	return &itemUsageResponse, nil
 }
 
-func (c *Client) newAPIRequest(ctx context.Context, method string, bearerToken string, path string, body io.Reader) *http.Request {
-	request, _ := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", c.APIHost, path), body)
+func (c *Client) newAPIRequest(ctx context.Context, method string, bearerToken string, path string, body io.Reader) (*http.Request, error) {
+	jwt, err := utils.ParseJWTClaims(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
+	url, err := jwt.GetEventsURL()
+	if err != nil {
+		return nil, err
+	}
+
+	request, _ := http.NewRequestWithContext(ctx, method, fmt.Sprintf("%s%s", url, path), body)
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 	request.Header.Add("User-Agent", DefaultUserAgent)
-	return request
+	return request, nil
 }
