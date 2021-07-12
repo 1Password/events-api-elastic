@@ -2,7 +2,10 @@ module go.1password.io/eventsapibeat
 
 go 1.15
 
-require github.com/elastic/beats/v7 v7.11.2
+require (
+	github.com/elastic/beats/v7 v7.11.2
+	gopkg.in/square/go-jose.v2 v2.6.0
+)
 
 // The following replace directives were taken from beats https://github.com/agilebits/beats/blob/v7.11.2/go.mod
 // Please read the following links for more information:
