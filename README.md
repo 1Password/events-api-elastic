@@ -6,10 +6,10 @@ This beat will fetch successful and failed sign-in attempts and items usage data
 ## Installation
 
 Download the latest binaries from [the releases page](https://github.com/1Password/events-api-elastic/releases/latest).  
-Or build from sources (_resulting packages will be located at _bin_ folder_):  
+Or build from sources (_resulting binary will be located at _bin_ folder_):  
 
 ```shell
-make build_all_apps
+make eventsapibeat
 ```
 
 ## Configuration
