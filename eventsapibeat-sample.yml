@@ -1,8 +1,4 @@
 eventsapibeat:
-  api_host: "https://events.1password.com"
-  #api_host: "https://events.ent.1password.ca"
-  #api_host: "https://events.1password.eu"
-  #api_host: "https://events.1password.eu"
   insecure_skip_verify: false
   signin_attempts:
     enabled: true
