@@ -1,27 +1,33 @@
 eventsapibeat:
   api_host: "https://events.1password.com"
+  #api_host: "https://events.ent.1password.ca"
+  #api_host: "https://events.1password.eu"
+  #api_host: "https://events.1password.eu"
   insecure_skip_verify: false
   signin_attempts:
     enabled: true
     auth_token: ""
     sample_frequency: "10s"
-    cursor_state_file: "bin/signinattempts.eventsapibeatstate"
+    cursor_state_file: "signinattempts.eventsapibeatstate"
     starting_cursor: >
       { "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }
   item_usages:
     enabled: true
     auth_token: ""
     sample_frequency: "10s"
-    cursor_state_file: "bin/itemusages.eventsapibeatstate"
+    cursor_state_file: "itemusages.eventsapibeatstate"
     starting_cursor: >
       { "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }
 
-# output.elasticsearch:
-#   hosts: ["localhost:9200"]
-#   index: "%{[agent.type]}-%{[agent.version]}-%{[@metadata][event_type]}-%{+yyyy.MM}"
+#output.logstash:
+#  hosts: ["localhost:5044"]
 
 #output.console:
 #  pretty: true
 
-output.logstash:
-  hosts: ["localhost:5044"]
+output.elasticsearch:
+  hosts: ["localhost:9200"]
+  index: "%{[agent.type]}-%{[agent.version]}-%{[@metadata][event_type]}-%{+yyyy.MM}"
+setup.ilm.enabled: false
+setup.template.name: "eventsapibeat"
+setup.template.pattern: "eventsapibeat-*"
