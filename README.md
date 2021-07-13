@@ -16,13 +16,9 @@ make eventsapibeat
 
 Rename the sample configuration file _eventsapibeat-sample.yml_ to _eventsapibeat.yml_.
 
-Create a [1Password Events Reporting](https://support.1password.com/events-reporting-elastic/) integration for your account and configure the `api_host` and `auth_token`.  
+Create a [1Password Events Reporting](https://support.1password.com/events-reporting-elastic/) integration for your account and configure the `auth_token`.  
 
 ```yaml
-api_host: "https://events.1password.com"
-#api_host: "https://events.ent.1password.ca"
-#api_host: "https://events.1password.eu"
-#api_host: "https://events.1password.eu"
 signin_attempts:
   auth_token: "token"
 item_usages:
