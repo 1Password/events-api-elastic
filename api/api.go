@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	DefaultTimeout   = 30 * time.Second
+	DefaultTimeout = 30 * time.Second
 )
+
 var DefaultUserAgent = "1Password Events API Beats / " + version.Version
 
 type Client struct {
@@ -23,59 +24,73 @@ type Client struct {
 }
 
 type SignInAttemptResponse struct {
-	Cursor  string `json:"cursor"`
-	HasMore bool   `json:"has_more"`
-	Items   []struct {
-		UUID        string    `json:"uuid"`
-		SessionUUID string    `json:"session_uuid"`
-		Timestamp   time.Time `json:"timestamp"`
-		Country     string    `json:"country"`
-		Category    string    `json:"category"`
-		Type        string    `json:"type"`
-		Details     *struct {
-			Value string `json:"value"`
-		} `json:"details"`
-		SignInAttemptTargetUser struct {
-			UUID  string `json:"uuid"`
-			Name  string `json:"name"`
-			Email string `json:"email"`
-		} `json:"target_user"`
-		SignInAttemptClient struct {
-			AppName         string `json:"app_name"`
-			AppVersion      string `json:"app_version"`
-			PlatformName    string `json:"platform_name"`
-			PlatformVersion string `json:"platform_version"`
-			OSName          string `json:"os_name"`
-			OSVersion       string `json:"os_version"`
-			IPAddress       string `json:"ip_address"`
-		} `json:"client"`
-	} `json:"items"`
+	Cursor  string          `json:"cursor"`
+	HasMore bool            `json:"has_more"`
+	Items   []SignInAttempt `json:"items"`
+}
+
+type SignInAttempt struct {
+	UUID                    string                  `json:"uuid"`
+	SessionUUID             string                  `json:"session_uuid"`
+	Timestamp               time.Time               `json:"timestamp"`
+	Country                 string                  `json:"country"`
+	Category                string                  `json:"category"`
+	Type                    string                  `json:"type"`
+	Details                 *SignInAttemptDetails   `json:"details"`
+	SignInAttemptTargetUser SignInAttemptTargetUser `json:"target_user"`
+	SignInAttemptClient     SignInAttemptClient     `json:"client"`
+}
+
+type SignInAttemptDetails struct {
+	Value string `json:"value"`
+}
+
+type SignInAttemptTargetUser struct {
+	UUID  string `json:"uuid"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type SignInAttemptClient struct {
+	AppName         string `json:"app_name"`
+	AppVersion      string `json:"app_version"`
+	PlatformName    string `json:"platform_name"`
+	PlatformVersion string `json:"platform_version"`
+	OSName          string `json:"os_name"`
+	OSVersion       string `json:"os_version"`
+	IPAddress       string `json:"ip_address"`
 }
 
 type ItemUsageResponse struct {
-	Cursor  string `json:"cursor"`
-	HasMore bool   `json:"has_more"`
-	Items   []struct {
-		UUID          string    `json:"uuid"`
-		Timestamp     time.Time `json:"timestamp"`
-		UsedVersion   uint32    `json:"used_version"`
-		VaultUUID     string    `json:"vault_uuid"`
-		ItemUUID      string    `json:"item_uuid"`
-		ItemUsageUser struct {
-			UUID  string `json:"uuid"`
-			Name  string `json:"name"`
-			Email string `json:"email"`
-		} `json:"user"`
-		ItemUsageClient struct {
-			AppName         string `json:"app_name"`
-			AppVersion      string `json:"app_version"`
-			PlatformName    string `json:"platform_name"`
-			PlatformVersion string `json:"platform_version"`
-			OSName          string `json:"os_name"`
-			OSVersion       string `json:"os_version"`
-			IPAddress       string `json:"ip_address"`
-		} `json:"client"`
-	} `json:"items"`
+	Cursor  string      `json:"cursor"`
+	HasMore bool        `json:"has_more"`
+	Items   []ItemUsage `json:"items"`
+}
+
+type ItemUsage struct {
+	UUID            string          `json:"uuid"`
+	Timestamp       time.Time       `json:"timestamp"`
+	UsedVersion     uint32          `json:"used_version"`
+	VaultUUID       string          `json:"vault_uuid"`
+	ItemUUID        string          `json:"item_uuid"`
+	ItemUsageUser   ItemUsageUser   `json:"user"`
+	ItemUsageClient ItemUsageClient `json:"client"`
+}
+
+type ItemUsageUser struct {
+	UUID  string `json:"uuid"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type ItemUsageClient struct {
+	AppName         string `json:"app_name"`
+	AppVersion      string `json:"app_version"`
+	PlatformName    string `json:"platform_name"`
+	PlatformVersion string `json:"platform_version"`
+	OSName          string `json:"os_name"`
+	OSVersion       string `json:"os_version"`
+	IPAddress       string `json:"ip_address"`
 }
 
 type IntrospectResponse struct {
