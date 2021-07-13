@@ -60,7 +60,7 @@ func New(_ *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 			},
 		}
 	}
-	eventsAPIBeat.apiClient, err = api.NewClient(eventsAPIBeat.config.APIHost, transport)
+	eventsAPIBeat.apiClient, err = api.NewClient(transport)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create api client. %w", err)
 	}
@@ -84,7 +84,6 @@ func New(_ *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 
 func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 	e.log.Infof("%s v%s is running! Hit CTRL-C to stop it.", BeatName, version.Version)
-	e.log.Info("APIHost: ", e.config.APIHost)
 	e.ctx, e.cancel = context.WithCancel(context.Background())
 
 	var err error
