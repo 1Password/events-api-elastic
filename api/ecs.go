@@ -8,7 +8,13 @@ import (
 
 const CustomFieldSet = "onepassword"
 
+var emptyMap = map[string]struct{}{}
+
 func (i *SignInAttempt) BeatEvent() *beat.Event {
+	var details interface{} = emptyMap
+	if i.Details == nil {
+		details = i.Details
+	}
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
@@ -32,7 +38,7 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 				"session_uuid": i.SessionUUID,
 				"type":         i.Type,
 				"country":      i.Country,
-				"details":      i.Details,
+				"details":      details,
 				"client": common.MapStr{
 					"app_name":         i.SignInAttemptClient.AppName,
 					"app_version":      i.SignInAttemptClient.AppVersion,
