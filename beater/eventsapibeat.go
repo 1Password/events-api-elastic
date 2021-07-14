@@ -155,15 +155,8 @@ func (e *EventsAPIBeat) signInAttemptsLoop(c chan<- *beat.Event) error {
 				for i := range signInAttemptsResponse.Items {
 					item := &signInAttemptsResponse.Items[i]
 
-					event := &beat.Event{
-						Meta: common.MapStr{
-							"event_type": SignInAttemptsType,
-						},
-						Timestamp: item.Timestamp,
-						Fields: common.MapStr{
-							"event": item,
-						},
-					}
+					event := item.BeatEvent()
+					_, _ = event.PutValue("@metadata.event_type", SignInAttemptsType)
 
 					c <- event
 				}
@@ -214,15 +207,8 @@ func (e *EventsAPIBeat) itemUsagesLoop(c chan<- *beat.Event) error {
 				for i := range itemUsagesResponse.Items {
 					item := &itemUsagesResponse.Items[i]
 
-					event := &beat.Event{
-						Meta: common.MapStr{
-							"event_type": ItemUsagesType,
-						},
-						Timestamp: item.Timestamp,
-						Fields: common.MapStr{
-							"event": item,
-						},
-					}
+					event := item.BeatEvent()
+					_, _ = event.PutValue("@metadata.event_type", ItemUsagesType)
 
 					c <- event
 				}
