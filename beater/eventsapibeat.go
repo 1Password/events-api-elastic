@@ -3,6 +3,7 @@ package beater
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"go.1password.io/eventsapibeat/api"
 	"go.1password.io/eventsapibeat/config"
 	"go.1password.io/eventsapibeat/store"
+	"go.1password.io/eventsapibeat/utils"
 	"go.1password.io/eventsapibeat/version"
 )
 
@@ -97,6 +99,14 @@ func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 
 	if e.config.SignInAttempts.Enabled {
 		e.log.Info("Starting sign-in attempts loop")
+		jwt, err := utils.ParseJWTClaims(e.config.SignInAttempts.AuthToken)
+		if err != nil {
+			return err
+		}
+
+		if !jwt.HaveSignInAttemptsFeature() {
+			return errors.New("sign-in attempt token does not have sign-in attempt feature")
+		}
 		go func() {
 			err := e.signInAttemptsLoop(eventsChan)
 			if err != nil {
@@ -107,6 +117,14 @@ func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 
 	if e.config.ItemUsages.Enabled {
 		e.log.Info("Starting item usages loop")
+		jwt, err := utils.ParseJWTClaims(e.config.ItemUsages.AuthToken)
+		if err != nil {
+			return err
+		}
+
+		if !jwt.HaveItemUsageFeature() {
+			return errors.New("item usage token does not have item usage feature")
+		}
 		go func() {
 			err := e.itemUsagesLoop(eventsChan)
 			if err != nil {

@@ -9,9 +9,13 @@ import (
 
 type JWTClaims struct {
 	Audience []string `json:"aud"`
+	Features []string `json:"1password.com/fts"`
 }
 
 const AudienceDEPRECATED = "com.1password.streamingservice"
+
+const ItemUsageFeatureScope = "itemusages"
+const SignInAttemptsFeatureScope = "signinattempts"
 
 func ParseJWTClaims(token string) (*JWTClaims, error) {
 	t, err := jwt.ParseSigned(token)
@@ -36,8 +40,16 @@ func ParseJWTClaims(token string) (*JWTClaims, error) {
 
 func (t *JWTClaims) GetEventsURL() (string, error) {
 	if t.Audience[0] == AudienceDEPRECATED {
-		return "", errors.New("Token does not have a url.")
+		return "", errors.New("token does not have a url")
 	}
 
 	return fmt.Sprintf("https://%s", t.Audience[0]), nil
+}
+
+func (t *JWTClaims) HaveSignInAttemptsFeature() bool {
+	return ContainsString(SignInAttemptsFeatureScope, t.Features)
+}
+
+func (t *JWTClaims) HaveItemUsageFeature() bool {
+	return ContainsString(ItemUsageFeatureScope, t.Features)
 }
