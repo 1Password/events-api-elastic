@@ -104,7 +104,7 @@ func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 			return err
 		}
 
-		if !jwt.HaveSignInAttemptsFeature() {
+		if !jwt.Features.Contains(utils.SignInAttemptsFeatureScope) {
 			return errors.New("sign-in attempt token does not have sign-in attempt feature")
 		}
 		go func() {
@@ -122,7 +122,7 @@ func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 			return err
 		}
 
-		if !jwt.HaveItemUsageFeature() {
+		if !jwt.Features.Contains(utils.ItemUsageFeatureScope) {
 			return errors.New("item usage token does not have item usage feature")
 		}
 		go func() {

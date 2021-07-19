@@ -7,9 +7,11 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
+type Features []string
+
 type JWTClaims struct {
 	Audience []string `json:"aud"`
-	Features []string `json:"1password.com/fts"`
+	Features Features `json:"1password.com/fts"`
 }
 
 const AudienceDEPRECATED = "com.1password.streamingservice"
@@ -46,10 +48,11 @@ func (t *JWTClaims) GetEventsURL() (string, error) {
 	return fmt.Sprintf("https://%s", t.Audience[0]), nil
 }
 
-func (t *JWTClaims) HaveSignInAttemptsFeature() bool {
-	return ContainsString(SignInAttemptsFeatureScope, t.Features)
-}
-
-func (t *JWTClaims) HaveItemUsageFeature() bool {
-	return ContainsString(ItemUsageFeatureScope, t.Features)
+func (s Features) Contains(v string) bool {
+	for _, a := range s {
+		if a == v {
+			return true
+		}
+	}
+	return false
 }
