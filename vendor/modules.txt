@@ -189,6 +189,7 @@ github.com/elastic/beats/v7/libbeat/testing
 github.com/elastic/beats/v7/libbeat/version
 github.com/elastic/beats/v7/winlogbeat/sys
 # github.com/elastic/ecs v1.6.0
+## explicit
 github.com/elastic/ecs/code/go/ecs
 # github.com/elastic/go-concert v0.0.4
 github.com/elastic/go-concert
@@ -287,8 +288,13 @@ github.com/h2non/filetype/matchers/isobmff
 github.com/h2non/filetype/types
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
+# github.com/hashicorp/go-cleanhttp v0.5.1
+github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-multierror v1.1.0
 github.com/hashicorp/go-multierror
+# github.com/hashicorp/go-retryablehttp v0.7.0
+## explicit
+github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-uuid v1.0.2
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/golang-lru v0.5.2-0.20190520140433-59383c442f7d

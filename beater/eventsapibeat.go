@@ -2,10 +2,8 @@ package beater
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -54,15 +52,12 @@ func New(_ *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		return nil, fmt.Errorf("invalid config. %v", err)
 	}
 
-	var transport http.RoundTripper
-	if eventsAPIBeat.config.InsecureSkipVerify {
-		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: eventsAPIBeat.config.InsecureSkipVerify,
-			},
-		}
-	}
-	eventsAPIBeat.apiClient, err = api.NewClient(transport)
+	eventsAPIBeat.apiClient, err = api.NewClient(
+		&leveledLoggerWrapper{
+			eventsAPIBeat.log,
+		},
+		eventsAPIBeat.config.InsecureSkipVerify,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create api client. %w", err)
 	}
@@ -266,4 +261,24 @@ func (e *EventsAPIBeat) Stop() {
 	if err != nil {
 		e.log.Error(err)
 	}
+}
+
+type leveledLoggerWrapper struct {
+	log *logp.Logger
+}
+
+func (l *leveledLoggerWrapper) Error(msg string, keysAndValues ...interface{}) {
+	l.log.Error(append([]interface{}{msg}, keysAndValues...))
+}
+
+func (l *leveledLoggerWrapper) Info(msg string, keysAndValues ...interface{}) {
+	l.log.Info(append([]interface{}{msg}, keysAndValues...))
+}
+
+func (l *leveledLoggerWrapper) Debug(msg string, keysAndValues ...interface{}) {
+	l.log.Debug(append([]interface{}{msg}, keysAndValues...))
+}
+
+func (l *leveledLoggerWrapper) Warn(msg string, keysAndValues ...interface{}) {
+	l.log.Warn(append([]interface{}{msg}, keysAndValues...))
 }
