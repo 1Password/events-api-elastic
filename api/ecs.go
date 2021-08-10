@@ -86,20 +86,20 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 }
 
 type ECSEvent struct {
-	Action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty" ecs:"action"`
 }
 
 type ECSUser struct {
-	ID       string `json:"id,omitempty"`
-	FullName string `json:"full_name,omitempty"`
-	Email    string `json:"email,omitempty"`
+	ID       string `json:"id,omitempty" ecs:"id"`
+	FullName string `json:"full_name,omitempty" ecs:"full_name"`
+	Email    string `json:"email,omitempty" ecs:"email"`
 }
 
 type ECSOs struct {
-	Name    string `json:"name,omitempty"`
-	Version string `json:"version,omitempty"`
+	Name    string `json:"name,omitempty" ecs:"name"`
+	Version string `json:"version,omitempty" ecs:"version"`
 }
 
 type ECSHost struct {
-	IP string `json:"ip,omitempty"`
+	IP string `json:"ip,omitempty" ecs:"ip"`
 }
