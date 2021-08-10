@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,12 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"go.1password.io/eventsapibeat/utils"
 	"go.1password.io/eventsapibeat/version"
-)
-
-const (
-	DefaultTimeout = 30 * time.Second
 )
 
 var DefaultUserAgent = "1Password Events API Beats / " + version.Version
@@ -99,13 +97,20 @@ type IntrospectResponse struct {
 	Features []string  `json:"Features"`
 }
 
-func NewClient(transport http.RoundTripper) (*Client, error) {
-	return &Client{
-		httpClient: &http.Client{
-			Timeout:   DefaultTimeout,
-			Transport: transport,
-		},
-	}, nil
+func NewClient(logger retryablehttp.LeveledLogger, insecureSkipVerify bool) (*Client, error) {
+	retryHTTPClient := retryablehttp.NewClient()
+	retryHTTPClient.Logger = logger
+	if httpTransport, ok := retryHTTPClient.HTTPClient.Transport.(*http.Transport); insecureSkipVerify && ok {
+		httpTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: insecureSkipVerify,
+		}
+	}
+
+	client := &Client{
+		httpClient: retryHTTPClient.StandardClient(),
+	}
+
+	return client, nil
 }
 
 func (c *Client) HTTPClient() *http.Client {
