@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/elastic/beats/v7/libbeat/beat"
 	"github.com/elastic/beats/v7/libbeat/common"
-	"github.com/elastic/ecs/code/go/ecs"
 )
 
 const CustomFieldSet = "onepassword"
@@ -18,19 +17,19 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
-			"event": ecs.Event{
+			"event": ECSEvent{
 				Action: i.Category,
 			},
-			"user": ecs.User{
+			"user": ECSUser{
 				ID:       i.SignInAttemptTargetUser.UUID,
 				FullName: i.SignInAttemptTargetUser.Name,
 				Email:    i.SignInAttemptTargetUser.Email,
 			},
-			"os": ecs.Os{
+			"os": ECSOs{
 				Name:    i.SignInAttemptClient.OSName,
 				Version: i.SignInAttemptClient.OSVersion,
 			},
-			"host": ecs.Host{
+			"host": ECSHost{
 				IP: i.SignInAttemptClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
@@ -56,16 +55,16 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
-			"user": ecs.User{
+			"user": ECSUser{
 				ID:       i.ItemUsageUser.UUID,
 				FullName: i.ItemUsageUser.Name,
 				Email:    i.ItemUsageUser.Email,
 			},
-			"os": ecs.Os{
+			"os": ECSOs{
 				Name:    i.ItemUsageClient.OSName,
 				Version: i.ItemUsageClient.OSVersion,
 			},
-			"host": ecs.Host{
+			"host": ECSHost{
 				IP: i.ItemUsageClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
@@ -84,4 +83,23 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 	}
 
 	return e
+}
+
+type ECSEvent struct {
+	Action string `json:"action,omitempty" ecs:"action"`
+}
+
+type ECSUser struct {
+	ID       string `json:"id,omitempty" ecs:"id"`
+	FullName string `json:"full_name,omitempty" ecs:"full_name"`
+	Email    string `json:"email,omitempty" ecs:"email"`
+}
+
+type ECSOs struct {
+	Name    string `json:"name,omitempty" ecs:"name"`
+	Version string `json:"version,omitempty" ecs:"version"`
+}
+
+type ECSHost struct {
+	IP string `json:"ip,omitempty" ecs:"ip"`
 }
