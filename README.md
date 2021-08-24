@@ -51,7 +51,7 @@ Elastic Common Schema
 | `user.email`                          | The email address of the user, hydrated at the time the event was generated                                                                               |
 | `os.name`                             | The name of the operating system of the user that attempted to sign in to the account                                                                     |
 | `os.version`                          | The version of the operating system of the user that attempted to sign in to the account                                                                  |
-| `host.ip`                             | The IP address that attempted to sign in to the account                                                                                                   |
+| `source.ip`                             | The IP address that attempted to sign in to the account                                                                                                   |
 | `onepassword.uuid`                    | The UUID of the event                                                                                                                                     |
 | `onepassword.session_uuid`            | The UUID of the session that created the event                                                                                                            |
 | `onepassword.type`                    | Details about the sign-in attempt                                                                                                                         |
@@ -72,7 +72,7 @@ Elastic Common Schema
 | `user.email`                          | The email address of the user, hydrated at the time the event was generated                                                                               |
 | `os.name`                             | The name of the operating system the item was accessed from                                                                                               |
 | `os.version`                          | The version of the operating system the item was accessed from                                                                                            |
-| `host.ip`                             | The IP address the item was accessed from                                                                                                                 |
+| `source.ip`                             | The IP address the item was accessed from                                                                                                                 |
 | `onepassword.uuid`                    | The UUID of the event                                                                                                                                     |
 | `onepassword.used_version`            | The version of the item that was accessed                                                                                                                 |
 | `onepassword.vault_uuid`              | The UUID of the vault the item is in                                                                                                                      |

@@ -29,7 +29,7 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 				Name:    i.SignInAttemptClient.OSName,
 				Version: i.SignInAttemptClient.OSVersion,
 			},
-			"host": ECSHost{
+			"source": ECSHost{
 				IP: i.SignInAttemptClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
@@ -64,7 +64,7 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 				Name:    i.ItemUsageClient.OSName,
 				Version: i.ItemUsageClient.OSVersion,
 			},
-			"host": ECSHost{
+			"source": ECSHost{
 				IP: i.ItemUsageClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
