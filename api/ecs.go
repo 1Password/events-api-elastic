@@ -100,6 +100,6 @@ type ECSOs struct {
 	Version string `json:"version,omitempty" ecs:"version"`
 }
 
-type ECSHost struct {
+type ECSSource struct {
 	IP string `json:"ip,omitempty" ecs:"ip"`
 }
