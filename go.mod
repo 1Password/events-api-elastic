@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/elastic/beats/v7 v7.11.2
-	github.com/elastic/ecs v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
