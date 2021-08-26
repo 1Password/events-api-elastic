@@ -29,7 +29,7 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 				Name:    i.SignInAttemptClient.OSName,
 				Version: i.SignInAttemptClient.OSVersion,
 			},
-			"host": ECSHost{
+			"source": ECSSource{
 				IP: i.SignInAttemptClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
@@ -64,7 +64,7 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 				Name:    i.ItemUsageClient.OSName,
 				Version: i.ItemUsageClient.OSVersion,
 			},
-			"host": ECSHost{
+			"source": ECSSource{
 				IP: i.ItemUsageClient.IPAddress,
 			},
 			CustomFieldSet: common.MapStr{
@@ -100,6 +100,6 @@ type ECSOs struct {
 	Version string `json:"version,omitempty" ecs:"version"`
 }
 
-type ECSHost struct {
+type ECSSource struct {
 	IP string `json:"ip,omitempty" ecs:"ip"`
 }
