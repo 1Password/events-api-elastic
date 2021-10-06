@@ -66,7 +66,8 @@ Elastic Common Schema
 
 | Field                                 | Description                                                                                                                                               |
 |---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `@timestamp`                          | The date and time of the sign-in attempt                                                                                                                  |
+| `@timestamp`                          | The date and time of the item usage                                                                                                                       |
+| `event.action`                        | The action performed on the item usage                                                                                                                    |
 | `user.id`                             | The UUID of the user that accessed the item                                                                                                               |
 | `user.full_name`                      | The name of the user, hydrated at the time the event was generated                                                                                        |
 | `user.email`                          | The email address of the user, hydrated at the time the event was generated                                                                               |

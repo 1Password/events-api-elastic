@@ -55,6 +55,9 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
+			"event": ECSEvent{
+				Action: i.Action,
+			},
 			"user": ECSUser{
 				ID:       i.ItemUsageUser.UUID,
 				FullName: i.ItemUsageUser.Name,
