@@ -11,7 +11,7 @@ var emptyMap = map[string]struct{}{}
 
 func (i *SignInAttempt) BeatEvent() *beat.Event {
 	var details interface{} = emptyMap
-	if i.Details == nil {
+	if i.Details != nil {
 		details = i.Details
 	}
 	e := &beat.Event{
