@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package apm
+package apm // import "go.elastic.co/apm"
 
 import (
 	"bytes"
@@ -103,6 +103,7 @@ type TracerOptions struct {
 	sampler               Sampler
 	sanitizedFieldNames   wildcard.Matchers
 	disabledMetrics       wildcard.Matchers
+	ignoreTransactionURLs wildcard.Matchers
 	captureHeaders        bool
 	captureBody           CaptureBodyMode
 	spanFramesMinDuration time.Duration
@@ -246,6 +247,7 @@ func (opts *TracerOptions) initDefaults(continueOnError bool) error {
 	opts.sampler = sampler
 	opts.sanitizedFieldNames = initialSanitizedFieldNames()
 	opts.disabledMetrics = initialDisabledMetrics()
+	opts.ignoreTransactionURLs = initialIgnoreTransactionURLs()
 	opts.breakdownMetrics = breakdownMetricsEnabled
 	opts.captureHeaders = captureHeaders
 	opts.captureBody = captureBody
@@ -423,6 +425,20 @@ func newTracer(opts TracerOptions) *Tracer {
 	t.setLocalInstrumentationConfig(envUseElasticTraceparentHeader, func(cfg *instrumentationConfigValues) {
 		cfg.propagateLegacyHeader = opts.propagateLegacyHeader
 	})
+	t.setLocalInstrumentationConfig(envSanitizeFieldNames, func(cfg *instrumentationConfigValues) {
+		cfg.sanitizedFieldNames = opts.sanitizedFieldNames
+	})
+	t.setLocalInstrumentationConfig(envIgnoreURLs, func(cfg *instrumentationConfigValues) {
+		cfg.ignoreTransactionURLs = opts.ignoreTransactionURLs
+	})
+	if apmlog.DefaultLogger != nil {
+		defaultLogLevel := apmlog.DefaultLogger.Level()
+		t.setLocalInstrumentationConfig(apmlog.EnvLogLevel, func(cfg *instrumentationConfigValues) {
+			// Revert to the original, local, log level when
+			// the centrally defined log level is removed.
+			apmlog.DefaultLogger.SetLevel(defaultLogLevel)
+		})
+	}
 
 	if !opts.active {
 		t.active = 0
@@ -439,7 +455,6 @@ func newTracer(opts TracerOptions) *Tracer {
 		cfg.metricsInterval = opts.metricsInterval
 		cfg.requestDuration = opts.requestDuration
 		cfg.requestSize = opts.requestSize
-		cfg.sanitizedFieldNames = opts.sanitizedFieldNames
 		cfg.disabledMetrics = opts.disabledMetrics
 		cfg.preContext = defaultPreContext
 		cfg.postContext = defaultPostContext
@@ -465,7 +480,6 @@ type tracerConfig struct {
 	metricsGatherers        []MetricsGatherer
 	contextSetter           stacktrace.ContextSetter
 	preContext, postContext int
-	sanitizedFieldNames     wildcard.Matchers
 	disabledMetrics         wildcard.Matchers
 	cpuProfileDuration      time.Duration
 	cpuProfileInterval      time.Duration
@@ -572,6 +586,10 @@ func (t *Tracer) SetLogger(logger Logger) {
 // of the the supplied patterns will have their values redacted. If
 // SetSanitizedFieldNames is called with no arguments, then no fields
 // will be redacted.
+//
+// Configuration via Kibana takes precedence over local configuration, so
+// if sanitized_field_names has been configured via Kibana, this call will
+// not have any effect until/unless that configuration has been removed.
 func (t *Tracer) SetSanitizedFieldNames(patterns ...string) error {
 	var matchers wildcard.Matchers
 	if len(patterns) != 0 {
@@ -580,8 +598,17 @@ func (t *Tracer) SetSanitizedFieldNames(patterns ...string) error {
 			matchers[i] = configutil.ParseWildcardPattern(p)
 		}
 	}
-	t.sendConfigCommand(func(cfg *tracerConfig) {
+	t.setLocalInstrumentationConfig(envSanitizeFieldNames, func(cfg *instrumentationConfigValues) {
 		cfg.sanitizedFieldNames = matchers
+	})
+	return nil
+}
+
+// SetIgnoreTransactionURLs sets the wildcard patterns that will be used to
+// ignore transactions with matching URLs.
+func (t *Tracer) SetIgnoreTransactionURLs(pattern string) error {
+	t.setLocalInstrumentationConfig(envIgnoreURLs, func(cfg *instrumentationConfigValues) {
+		cfg.ignoreTransactionURLs = configutil.ParseWildcardPatterns(pattern)
 	})
 	return nil
 }
@@ -1188,6 +1215,10 @@ func (t *Tracer) encodeRequestMetadata(json *fastjson.Writer) {
 	t.process.MarshalFastJSON(json)
 	json.RawString(`,"service":`)
 	service.MarshalFastJSON(json)
+	if cloud := getCloudMetadata(); cloud != nil {
+		json.RawString(`,"cloud":`)
+		cloud.MarshalFastJSON(json)
+	}
 	if len(globalLabels) > 0 {
 		json.RawString(`,"labels":`)
 		globalLabels.MarshalFastJSON(json)

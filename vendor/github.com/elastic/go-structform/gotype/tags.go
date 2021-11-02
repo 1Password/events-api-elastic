@@ -19,6 +19,18 @@ package gotype
 
 import "strings"
 
+// tagOptions represents additional per field options that have
+// been parsed from the struct tags.
+//
+// Available options are:
+//   - squash, inline: The field must be a map[string]... or another struct.
+//     All fields from the struct will be treated like they belong to the current
+//     struct.
+//   - omit: The field is never reported
+//   - omitempty: The field is not reported if the value is assumed to be empty.
+//     Strings, arrays, maps of 0 length and nil pointers are always assumed to be empty.
+//     Custom types can implement the `IsZero() bool` method (IsZeroer interface). If the
+//     `IsZero` method is true and `omitempty` has been set, the field will be ignored.
 type tagOptions struct {
 	squash    bool
 	omitEmpty bool

@@ -24,6 +24,12 @@ const (
 	PROCESS_VM_READ                   uint32 = 0x0010
 )
 
+// error codes for GetVolumeInformation function
+const (
+	ERROR_INVALID_FUNCTION syscall.Errno = 1
+	ERROR_NOT_READY        syscall.Errno = 21
+)
+
 // SizeOfRtlUserProcessParameters gives the size
 // of the RtlUserProcessParameters struct.
 const SizeOfRtlUserProcessParameters = unsafe.Sizeof(RtlUserProcessParameters{})
@@ -346,6 +352,10 @@ func GetFilesystemType(rootPathName string) (string, error) {
 
 	buffer := make([]uint16, MAX_PATH+1)
 	success, err := _GetVolumeInformation(rootPathNamePtr, nil, 0, nil, nil, nil, &buffer[0], MAX_PATH)
+	// check if CD-ROM or other type that is not supported in GetVolumeInformation function
+	if err == ERROR_NOT_READY || err == ERROR_INVALID_FUNCTION {
+		return "", nil
+	}
 	if !success {
 		return "", errors.Wrap(err, "GetVolumeInformationW failed")
 	}

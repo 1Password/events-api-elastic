@@ -22,6 +22,12 @@ package ecs
 // Fields related to HTTP activity. Use the `url` field set to store the url of
 // the request.
 type Http struct {
+	// A unique identifier for each HTTP request to correlate logs between
+	// clients and servers in transactions.
+	// The id may be contained in a non-standard HTTP header, such as
+	// `X-Request-ID` or `X-Correlation-ID`.
+	RequestID string `ecs:"request.id"`
+
 	// HTTP request method.
 	// Prior to ECS 1.6.0 the following guidance was provided:
 	// "The field value must be normalized to lowercase for querying."
@@ -29,6 +35,13 @@ type Http struct {
 	// the method may be useful in anomaly detection.  Original case will be
 	// mandated in ECS 2.0.0
 	RequestMethod string `ecs:"request.method"`
+
+	// Mime type of the body of the request.
+	// This value must only be populated based on the content of the request
+	// body, not on the `Content-Type` header. Comparing the mime type of a
+	// request with the request's Content-Type header can be helpful in
+	// detecting threats or misconfigured clients.
+	RequestMimeType string `ecs:"request.mime_type"`
 
 	// The full HTTP request body.
 	RequestBodyContent string `ecs:"request.body.content"`
@@ -38,6 +51,13 @@ type Http struct {
 
 	// HTTP response status code.
 	ResponseStatusCode int64 `ecs:"response.status_code"`
+
+	// Mime type of the body of the response.
+	// This value must only be populated based on the content of the response
+	// body, not on the `Content-Type` header. Comparing the mime type of a
+	// response with the response's Content-Type header can be helpful in
+	// detecting misconfigured servers.
+	ResponseMimeType string `ecs:"response.mime_type"`
 
 	// The full HTTP response body.
 	ResponseBodyContent string `ecs:"response.body.content"`

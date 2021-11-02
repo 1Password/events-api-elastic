@@ -19,8 +19,15 @@
 
 package ecs
 
-// Source fields describe details about the source of a packet/event.
+// Source fields capture details about the sender of a network exchange/packet.
+// These fields are populated from a network event, packet, or other event
+// containing details of a network transaction.
 // Source fields are usually populated in conjunction with destination fields.
+// The source and destination fields are considered the baseline and should
+// always be filled if an event contains source and destination details from a
+// network transaction. If the event also contains identification of the client
+// and server roles, then the client and server fields should also be
+// populated.
 type Source struct {
 	// Some event source addresses are defined ambiguously. The event will
 	// sometimes list an IP, a domain or a unix socket.  You should always
@@ -36,6 +43,10 @@ type Source struct {
 	Port int64 `ecs:"port"`
 
 	// MAC address of the source.
+	// The notation format from RFC 7042 is suggested: Each octet (that is,
+	// 8-bit byte) is represented by two [uppercase] hexadecimal digits giving
+	// the value of the octet as an unsigned integer. Successive octets are
+	// separated by a hyphen.
 	MAC string `ecs:"mac"`
 
 	// Source domain.
@@ -58,6 +69,17 @@ type Source struct {
 	// simply taking the last label will not work well for effective TLDs such
 	// as "co.uk".
 	TopLevelDomain string `ecs:"top_level_domain"`
+
+	// The subdomain portion of a fully qualified domain name includes all of
+	// the names except the host name under the registered_domain.  In a
+	// partially qualified domain, or if the the qualification level of the
+	// full name cannot be determined, subdomain contains all of the names
+	// below the registered domain.
+	// For example the subdomain portion of "www.east.mydomain.co.uk" is
+	// "east". If the domain has multiple levels of subdomain, such as
+	// "sub2.sub1.example.com", the subdomain field should contain "sub2.sub1",
+	// with no trailing period.
+	Subdomain string `ecs:"subdomain"`
 
 	// Bytes sent from the source to the destination.
 	Bytes int64 `ecs:"bytes"`

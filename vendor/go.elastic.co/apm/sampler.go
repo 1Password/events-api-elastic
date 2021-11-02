@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package apm
+package apm // import "go.elastic.co/apm"
 
 import (
 	"encoding/binary"
@@ -62,7 +62,15 @@ type SampleResult struct {
 	Sampled bool
 
 	// SampleRate holds the sample rate in effect at the
-	// time of the sampling decision.
+	// time of the sampling decision. This is used for
+	// propagating the value downstream, and for inclusion
+	// in events sent to APM Server.
+	//
+	// The sample rate will be rounded to 4 decimal places
+	// half away from zero, except if it is in the interval
+	// (0, 0.0001], in which case it is set to 0.0001. The
+	// Sampler implementation should also internally apply
+	// this logic to ensure consistency.
 	SampleRate float64
 }
 
@@ -72,12 +80,17 @@ type SampleResult struct {
 // samples ~50%, and so on. If the ratio provided does not lie
 // within the range [0,1.0], NewRatioSampler will panic.
 //
+// Sampling rate is rounded to 4 digits half away from zero,
+// except if it is in the interval (0, 0.0001], in which case
+// is set to 0.0001.
+//
 // The returned Sampler bases its decision on the value of the
 // transaction ID, so there is no synchronization involved.
 func NewRatioSampler(r float64) Sampler {
 	if r < 0 || r > 1.0 {
 		panic(errors.Errorf("ratio %v out of range [0,1.0]", r))
 	}
+	r = roundSampleRate(r)
 	var x big.Float
 	x.SetUint64(math.MaxUint64)
 	x.Mul(&x, big.NewFloat(r))
@@ -105,4 +118,13 @@ func (s ratioSampler) SampleExtended(args SampleParams) SampleResult {
 		SampleRate: s.ratio,
 	}
 	return result
+}
+
+// roundSampleRate rounds r to 4 decimal places half away from zero,
+// with the exception of values > 0 and < 0.0001, which are set to 0.0001.
+func roundSampleRate(r float64) float64 {
+	if r > 0 && r < 0.0001 {
+		r = 0.0001
+	}
+	return round(r*10000) / 10000
 }

@@ -17,6 +17,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [1.7.0] - 2021-02-22
+
+### Added
+
+- Add per-process network stats [#96](https://github.com/elastic/go-sysinfo/pull/96)
+
+## [1.6.0] - 2021-02-09
+
+### Added
+
+- Add darwin/arm64 support (Apple M1). [#91](https://github.com/elastic/go-sysinfo/pull/91)
+
+## [1.5.0] - 2021-01-14
+
+### Added
+
+- Added os.type field to host info. [#87](https://github.com/elastic/go-sysinfo/pull/87)
+
+## [1.4.0] - 2020-07-21
+
+### Added
+
+- Add AIX support [#77](https://github.com/elastic/go-sysinfo/pull/77)
+- Added detection of containerized cgroup in Kubernetes [#80](https://github.com/elastic/go-sysinfo/pull/80)
+
 ## [1.3.0] - 2020-01-13
 
 ### Changed
@@ -81,7 +106,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Changed the host containerized check to reduce false positives. [#42](https://github.com/elastic/go-sysinfo/pull/42) [#43](https://github.com/elastic/go-sysinfo/pull/43)
 
-[Unreleased]: https://github.com/elastic/go-sysinfo/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/elastic/go-sysinfo/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.7.0
+[1.6.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.6.0
+[1.5.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.5.0
+[1.4.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.4.0
 [1.3.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.3.0
 [1.2.1]: https://github.com/elastic/go-sysinfo/releases/tag/v1.2.1
 [1.2.0]: https://github.com/elastic/go-sysinfo/releases/tag/v1.2.0

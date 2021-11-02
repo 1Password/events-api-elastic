@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package apm
+package apm // import "go.elastic.co/apm"
 
 import (
 	"go.elastic.co/apm/internal/ringbuffer"
@@ -117,21 +117,13 @@ func (w *modelWriter) buildModelTransaction(out *model.Transaction, tx *Transact
 	out.Name = truncateString(td.Name)
 	out.Type = truncateString(td.Type)
 	out.Result = truncateString(td.Result)
+	out.Outcome = normalizeOutcome(td.Outcome)
 	out.Timestamp = model.Time(td.timestamp.UTC())
 	out.Duration = td.Duration.Seconds() * 1000
 	out.SpanCount.Started = td.spansCreated
 	out.SpanCount.Dropped = td.spansDropped
 	if sampled {
 		out.Context = td.Context.build()
-	}
-
-	if len(w.cfg.sanitizedFieldNames) != 0 && out.Context != nil {
-		if out.Context.Request != nil {
-			sanitizeRequest(out.Context.Request, w.cfg.sanitizedFieldNames)
-		}
-		if out.Context.Response != nil {
-			sanitizeResponse(out.Context.Response, w.cfg.sanitizedFieldNames)
-		}
 	}
 }
 
@@ -151,6 +143,7 @@ func (w *modelWriter) buildModelSpan(out *model.Span, span *Span, sd *SpanData) 
 	out.Action = truncateString(sd.Action)
 	out.Timestamp = model.Time(sd.timestamp.UTC())
 	out.Duration = sd.Duration.Seconds() * 1000
+	out.Outcome = normalizeOutcome(sd.Outcome)
 	out.Context = sd.Context.build()
 
 	// Copy the span type to context.destination.service.type.
@@ -269,5 +262,14 @@ func (w *modelWriter) setStacktraceContext(stack []model.StacktraceFrame) {
 			w.cfg.logger.Debugf("setting context failed: %v", err)
 		}
 		w.stats.Errors.SetContext++
+	}
+}
+
+func normalizeOutcome(outcome string) string {
+	switch outcome {
+	case "success", "failure", "unknown":
+		return outcome
+	default:
+		return "unknown"
 	}
 }
