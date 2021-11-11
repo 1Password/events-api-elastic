@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/joeshaw/multierror"
@@ -33,7 +34,7 @@ import (
 	"github.com/elastic/beats/v7/libbeat/logp"
 )
 
-var importAPI = "/api/kibana/dashboards/import"
+var importAPI = "/api/saved_objects/_import"
 
 type KibanaLoader struct {
 	client       *kibana.Client
@@ -41,6 +42,8 @@ type KibanaLoader struct {
 	version      common.Version
 	hostname     string
 	msgOutputter MessageOutputter
+
+	loadedAssets map[string]bool
 }
 
 // NewKibanaLoader creates a new loader to load Kibana files
@@ -61,6 +64,7 @@ func NewKibanaLoader(ctx context.Context, cfg *common.Config, dashboardsConfig *
 		version:      client.GetVersion(),
 		hostname:     hostname,
 		msgOutputter: msgOutputter,
+		loadedAssets: make(map[string]bool, 0),
 	}
 
 	version := client.GetVersion()
@@ -87,6 +91,12 @@ func getKibanaClient(ctx context.Context, cfg *common.Config, retryCfg *Retry, r
 
 // ImportIndexFile imports an index pattern from a file
 func (loader KibanaLoader) ImportIndexFile(file string) error {
+	if loader.version.LessThan(kibana.MinimumRequiredVersionSavedObjects) {
+		return fmt.Errorf("Kibana version must be at least " + kibana.MinimumRequiredVersionSavedObjects.String())
+	}
+
+	loader.statusMsg("Importing index file from %s", file)
+
 	// read json file
 	reader, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -104,15 +114,20 @@ func (loader KibanaLoader) ImportIndexFile(file string) error {
 
 // ImportIndex imports the passed index pattern to Kibana
 func (loader KibanaLoader) ImportIndex(pattern common.MapStr) error {
+	if loader.version.LessThan(kibana.MinimumRequiredVersionSavedObjects) {
+		return fmt.Errorf("Kibana version must be at least " + kibana.MinimumRequiredVersionSavedObjects.String())
+	}
+
 	var errs multierror.Errors
 
 	params := url.Values{}
-	params.Set("force", "true") //overwrite the existing dashboards
+	params.Set("overwrite", "true")
 
 	if err := ReplaceIndexInIndexPattern(loader.config.Index, pattern); err != nil {
 		errs = append(errs, errors.Wrapf(err, "error setting index '%s' in index pattern", loader.config.Index))
 	}
-	if err := loader.client.ImportJSON(importAPI, params, pattern); err != nil {
+
+	if err := loader.client.ImportMultiPartFormFile(importAPI, params, "index-template.ndjson", pattern.String()); err != nil {
 		errs = append(errs, errors.Wrap(err, "error loading index pattern"))
 	}
 	return errs.Err()
@@ -120,31 +135,97 @@ func (loader KibanaLoader) ImportIndex(pattern common.MapStr) error {
 
 // ImportDashboard imports the dashboard file
 func (loader KibanaLoader) ImportDashboard(file string) error {
+	if loader.version.LessThan(kibana.MinimumRequiredVersionSavedObjects) {
+		return fmt.Errorf("Kibana version must be at least " + kibana.MinimumRequiredVersionSavedObjects.String())
+	}
+
+	loader.statusMsg("Importing dashboard from %s", file)
+
 	params := url.Values{}
-	params.Set("force", "true")            //overwrite the existing dashboards
-	params.Add("exclude", "index-pattern") //don't import the index pattern from the dashboards
+	params.Set("overwrite", "true")
 
 	// read json file
-	reader, err := ioutil.ReadFile(file)
+	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("fail to read dashboard from file %s: %v", file, err)
 	}
-	var content common.MapStr
-	err = json.Unmarshal(reader, &content)
+
+	content = loader.formatDashboardAssets(content)
+
+	dashboardWithReferences, err := loader.addReferences(file, content)
 	if err != nil {
-		return fmt.Errorf("fail to unmarshal the dashboard content from file %s: %v", file, err)
+		return fmt.Errorf("error getting references of dashboard: %+v", err)
 	}
 
-	content = ReplaceIndexInDashboardObject(loader.config.Index, content)
-
-	content, err = ReplaceStringInDashboard("CHANGEME_HOSTNAME", loader.hostname, content)
-	if err != nil {
-		return fmt.Errorf("fail to replace the hostname in dashboard %s: %v", file, err)
+	if err := loader.client.ImportMultiPartFormFile(importAPI, params, correctExtension(file), dashboardWithReferences); err != nil {
+		return fmt.Errorf("error dashboard asset: %+v", err)
 	}
 
-	return loader.client.ImportJSON(importAPI, params, content)
+	loader.loadedAssets[file] = true
+	return nil
 }
 
+type dashboardObj struct {
+	References []dashboardReference `json:"references"`
+}
+type dashboardReference struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+}
+
+func (loader KibanaLoader) addReferences(path string, dashboard []byte) (string, error) {
+	var d dashboardObj
+	err := json.Unmarshal(dashboard, &d)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse dashboard references: %+v", err)
+	}
+
+	base := filepath.Dir(path)
+	var result string
+	for _, ref := range d.References {
+		if ref.Type == "index-pattern" {
+			continue
+		}
+		referencePath := filepath.Join(base, "..", ref.Type, ref.ID+".json")
+		if _, ok := loader.loadedAssets[referencePath]; ok {
+			continue
+		}
+		refContents, err := ioutil.ReadFile(referencePath)
+		if err != nil {
+			return "", fmt.Errorf("fail to read referenced asset from file %s: %v", referencePath, err)
+		}
+		refContents = loader.formatDashboardAssets(refContents)
+		refContentsWithReferences, err := loader.addReferences(referencePath, refContents)
+		if err != nil {
+			return "", fmt.Errorf("failed to get references of %s: %+v", referencePath, err)
+		}
+
+		result += refContentsWithReferences
+		loader.loadedAssets[referencePath] = true
+	}
+
+	var res common.MapStr
+	err = json.Unmarshal(dashboard, &res)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert asset: %+v", err)
+	}
+	result += res.String() + "\n"
+
+	return result, nil
+}
+
+func (loader KibanaLoader) formatDashboardAssets(content []byte) []byte {
+	content = ReplaceIndexInDashboardObject(loader.config.Index, content)
+	content = EncodeJSONObjects(content)
+	content = ReplaceStringInDashboard("CHANGEME_HOSTNAME", loader.hostname, content)
+	return content
+}
+
+func correctExtension(file string) string {
+	return filepath.Base(file[:len(file)-len("json")]) + "ndjson"
+}
+
+// Close closes the client
 func (loader KibanaLoader) Close() error {
 	return loader.client.Close()
 }

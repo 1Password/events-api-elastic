@@ -140,13 +140,14 @@ func (self *FileSystemList) Get() error {
 		if err != nil {
 			return errors.Wrapf(err, "GetFilesystemType failed")
 		}
-
-		self.List = append(self.List, FileSystem{
-			DirName:     drive,
-			DevName:     drive,
-			TypeName:    dt.String(),
-			SysTypeName: fsType,
-		})
+		if fsType != "" {
+			self.List = append(self.List, FileSystem{
+				DirName:     drive,
+				DevName:     drive,
+				TypeName:    dt.String(),
+				SysTypeName: fsType,
+			})
+		}
 	}
 	return nil
 }

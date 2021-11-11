@@ -4,10 +4,9 @@ This repository holds the version of Sarama shipped with Beats, which sometimes 
 
 ## Current state
 
-The current baseline Sarama version is `v1.26.4`.
+The current baseline Sarama version is `v1.27.2`.
 
 The additional patches applied to this version are:
-- A fix for Kerberos authentication ([issue](https://github.com/Shopify/sarama/issues/1658), [pull request](https://github.com/elastic/sarama/pull/11), [upstream pull request](https://github.com/Shopify/sarama/pull/1697) [merged, not yet released]) 
 - A fix for exponential backoff when a Kafka broker is down ([issue](https://github.com/Shopify/sarama/issues/1719), [pull request](https://github.com/elastic/sarama/pull/10), [upstream pull request](https://github.com/Shopify/sarama/pull/1720))
 
 ## Updating this repository
@@ -54,8 +53,9 @@ After this, open a regular pull request as in the previous section, remembering 
 After a new fix or update, the Beats repository needs to be updated to point to the new version. You should almost always target the most recent commit in the [commits list for the `beats-fork` branch](https://github.com/elastic/sarama/commits/beats-fork) unless that would disrupt an impending release. Copy the commit hash (with the copy icon or by clicking through to the commit itself), then from a local branch of the Beats repository:
 
     go mod edit -replace github.com/Shopify/sarama=github.com/elastic/sarama@[commit hash]
-    mage vendor
-    mage update
+    make notice
+
+(When backporting to 7.8 or earlier you will also need to run `mage vendor` and then rerun `make notice` in the backport branch.)
 
 You can then commit the results and submit a PR against the Beats repository, remembering to backport if appropriate. Pull requests MUST include the commit summary they target in their description, e.g.:
 
@@ -70,7 +70,7 @@ Date:   Wed Jun 10 16:19:46 2020 -0400
 ```
 "
 
-(This information is technically redundant, but makes it much easier for code reviewers to confirm that the right version is being applied.)
+(This information is technically redundant, but makes it much easier for code reviewers to confirm that the right version is being applied.) See this [example PR](https://github.com/elastic/beats/pull/19527).
 
 ### What Sarama version is Beats linked to?
 
@@ -128,7 +128,7 @@ You might also want to look at the [Frequently Asked Questions](https://github.c
 Sarama provides a "2 releases + 2 months" compatibility guarantee: we support
 the two latest stable releases of Kafka and Go, and we provide a two month
 grace period for older releases. This means we currently officially support
-Go 1.12 through 1.14, and Kafka 2.1 through 2.4, although older releases are
+Go 1.13 through 1.14, and Kafka 2.4 through 2.6, although older releases are
 still likely to work.
 
 Sarama follows semantic versioning and provides API stability via the gopkg.in service.

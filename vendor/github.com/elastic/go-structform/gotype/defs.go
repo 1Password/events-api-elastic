@@ -52,8 +52,15 @@ var (
 	tFolder      = reflect.TypeOf((*Folder)(nil)).Elem()
 	tExpander    = reflect.TypeOf((*Expander)(nil)).Elem()
 	tUnfoldState = reflect.TypeOf((*UnfoldState)(nil)).Elem()
+	tIsZeroer    = reflect.TypeOf((*IsZeroer)(nil)).Elem()
 )
 
 func bytes2Str(b []byte) string {
 	return unsafe.Bytes2Str(b)
 }
+
+func implementsFolder(t reflect.Type) bool    { return t.Implements(tFolder) }
+func implementsPtrFolder(t reflect.Type) bool { return implementsFolder(reflect.PtrTo(t)) }
+
+func implementsIsZeroer(t reflect.Type) bool    { return t.Implements(tIsZeroer) }
+func implementsPtrIsZeroer(t reflect.Type) bool { return implementsIsZeroer(reflect.PtrTo(t)) }

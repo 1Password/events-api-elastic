@@ -40,12 +40,12 @@ type node struct {
 	config  *Config
 	metagen metadata.MetaGen
 	logger  *logp.Logger
-	publish func(bus.Event)
+	publish func([]bus.Event)
 	watcher kubernetes.Watcher
 }
 
 // NewNodeEventer creates an eventer that can discover and process node objects
-func NewNodeEventer(uuid uuid.UUID, cfg *common.Config, client k8s.Interface, publish func(event bus.Event)) (Eventer, error) {
+func NewNodeEventer(uuid uuid.UUID, cfg *common.Config, client k8s.Interface, publish func(event []bus.Event)) (Eventer, error) {
 	logger := logp.NewLogger("autodiscover.node")
 
 	config := defaultConfig()
@@ -57,7 +57,16 @@ func NewNodeEventer(uuid uuid.UUID, cfg *common.Config, client k8s.Interface, pu
 	// Ensure that node is set correctly whenever the scope is set to "node". Make sure that node is empty
 	// when cluster scope is enforced.
 	if config.Scope == "node" {
-		config.Node = kubernetes.DiscoverKubernetesNode(logger, config.Node, kubernetes.IsInCluster(config.KubeConfig), client)
+		nd := &kubernetes.DiscoverKubernetesNodeParams{
+			ConfigHost:  config.Node,
+			Client:      client,
+			IsInCluster: kubernetes.IsInCluster(config.KubeConfig),
+			HostUtils:   &kubernetes.DefaultDiscoveryUtils{},
+		}
+		config.Node, err = kubernetes.DiscoverKubernetesNode(logger, nd)
+		if err != nil {
+			return nil, fmt.Errorf("could not discover kubernetes node: %w", err)
+		}
 	} else {
 		config.Node = ""
 	}
@@ -65,9 +74,10 @@ func NewNodeEventer(uuid uuid.UUID, cfg *common.Config, client k8s.Interface, pu
 	logger.Debugf("Initializing a new Kubernetes watcher using node: %v", config.Node)
 
 	watcher, err := kubernetes.NewWatcher(client, &kubernetes.Node{}, kubernetes.WatchOptions{
-		SyncTimeout: config.SyncPeriod,
-		Node:        config.Node,
-		IsUpdated:   isUpdated,
+		SyncTimeout:  config.SyncPeriod,
+		Node:         config.Node,
+		IsUpdated:    isUpdated,
+		HonorReSyncs: true,
 	}, nil)
 
 	if err != nil {
@@ -78,7 +88,7 @@ func NewNodeEventer(uuid uuid.UUID, cfg *common.Config, client k8s.Interface, pu
 		config:  config,
 		uuid:    uuid,
 		publish: publish,
-		metagen: metadata.NewNodeMetadataGenerator(cfg, watcher.Store()),
+		metagen: metadata.NewNodeMetadataGenerator(cfg, watcher.Store(), client),
 		logger:  logger,
 		watcher: watcher,
 	}
@@ -176,7 +186,9 @@ func (n *node) emit(node *kubernetes.Node, flag string) {
 	eventID := fmt.Sprint(node.GetObjectMeta().GetUID())
 	meta := n.metagen.Generate(node)
 
-	kubemeta := meta.Clone()
+	kubemetaMap, _ := meta.GetValue("kubernetes")
+	kubemeta, _ := kubemetaMap.(common.MapStr)
+	kubemeta = kubemeta.Clone()
 	// Pass annotations to all events so that it can be used in templating and by annotation builders.
 	annotations := common.MapStr{}
 	for k, v := range node.GetObjectMeta().GetAnnotations() {
@@ -189,11 +201,9 @@ func (n *node) emit(node *kubernetes.Node, flag string) {
 		flag:         true,
 		"host":       host,
 		"kubernetes": kubemeta,
-		"meta": common.MapStr{
-			"kubernetes": meta,
-		},
+		"meta":       meta,
 	}
-	n.publish(event)
+	n.publish([]bus.Event{event})
 }
 
 func isUpdated(o, n interface{}) bool {
