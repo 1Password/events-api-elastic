@@ -52,7 +52,7 @@ func getReflectFold(c *foldContext, t reflect.Type) (reFoldFn, error) {
 		return f, nil
 	}
 
-	if t.Implements(tFolder) {
+	if implementsFolder(t) || implementsPtrFolder(t) {
 		f := reFoldFolderIfc
 		c.reg.set(t, f)
 		return f, nil
@@ -130,7 +130,11 @@ func getReflectFoldElem(c *foldContext, t reflect.Type) (reFoldFn, error) {
 }
 
 func foldInterfaceElem(C *foldContext, v reflect.Value) error {
-	if v.IsNil() {
+	if v.Kind() != reflect.Interface {
+		return foldAnyReflect(C, v)
+	}
+
+	if (v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface) && v.IsNil() {
 		return C.visitor.OnNil()
 	}
 	return foldAnyReflect(C, v.Elem())
@@ -220,7 +224,7 @@ func buildFieldFold(C *foldContext, t reflect.Type, idx int) (reFoldFn, error) {
 	}
 
 	if tagOpts.squash {
-		return buildFieldFoldInline(C, t, idx, tagOpts.omitEmpty)
+		return buildFieldFoldInline(C, t, idx)
 	}
 
 	foldT := st.Type
@@ -248,7 +252,6 @@ func buildFieldFoldInline(
 	C *foldContext,
 	t reflect.Type,
 	idx int,
-	omitEmpty bool,
 ) (reFoldFn, error) {
 	var (
 		st          = t.Field(idx)
@@ -284,7 +287,7 @@ func fieldFoldGenInline(C *foldContext, t reflect.Type) (reFoldFn, error) {
 		}
 	}
 
-	if t.Implements(tFolder) {
+	if implementsFolder(t) || implementsPtrFolder(t) {
 		return embeddObjReFold(C, reFoldFolderIfc), nil
 	}
 
@@ -316,7 +319,7 @@ func makeFieldInlineFold(idx int, fn reFoldFn) reFoldFn {
 }
 
 func makeNonEmptyFieldFold(name string, idx int, t reflect.Type, fn reFoldFn) (reFoldFn, error) {
-	resolver := makeResolveValue(t)
+	resolver := makeResolveNonEmptyValue(t)
 	if resolver == nil {
 		return makeFieldFold(name, idx, fn)
 	}
@@ -333,15 +336,42 @@ func makeNonEmptyFieldFold(name string, idx int, t reflect.Type, fn reFoldFn) (r
 	}, nil
 }
 
-func makeResolveValue(st reflect.Type) func(reflect.Value) (reflect.Value, bool) {
+func makeResolveNonEmptyValue(st reflect.Type) func(reflect.Value) (reflect.Value, bool) {
 	type resolver func(reflect.Value) (reflect.Value, bool)
 
 	resolveBySize := func(v reflect.Value) (reflect.Value, bool) {
 		return v, v.Len() > 0
 	}
 
-	resolveNonNil := func(v reflect.Value) (reflect.Value, bool) {
-		return v, !v.IsNil()
+	resolveIsZeroer := func(v reflect.Value) (reflect.Value, bool) {
+		empty := v.Interface().(IsZeroer).IsZero()
+		return v, !empty
+	}
+
+	resolveIsZeroerPtr := func(v reflect.Value) (reflect.Value, bool) {
+		if v.CanAddr() {
+			return resolveIsZeroer(v.Addr())
+		}
+
+		tmp := reflect.New(v.Type())
+		tmp.Elem().Set(v)
+		return resolveIsZeroer(tmp)
+	}
+
+	resolveInterfaceLazy := func(v reflect.Value) (reflect.Value, bool) {
+		if v.IsNil() {
+			return v, false
+		}
+
+		// Find potential resolver based on interface element type.
+		// If no resolver is found, the value seems to be ok and should be reported.
+		elem := v.Elem()
+		resolver := makeResolveNonEmptyValue(elem.Type())
+		if resolver == nil {
+			return v, true // report, as v does not seem special
+		}
+
+		return resolver(v.Elem())
 	}
 
 	var resolvers []resolver
@@ -353,10 +383,15 @@ func makeResolveValue(st reflect.Type) func(reflect.Value) (reflect.Value, bool)
 			resolvers = append(resolvers, r)
 			continue
 		case reflect.Interface:
-			resolvers = append(resolvers, resolveNonNil)
+			resolvers = append(resolvers, resolveInterfaceLazy)
 		case reflect.Map, reflect.String, reflect.Slice, reflect.Array:
 			resolvers = append(resolvers, resolveBySize)
 		default:
+			if implementsIsZeroer(st) {
+				resolvers = append(resolvers, resolveIsZeroer)
+			} else if implementsPtrIsZeroer(st) {
+				resolvers = append(resolvers, resolveIsZeroerPtr)
+			}
 		}
 		break
 	}

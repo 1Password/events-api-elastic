@@ -14,6 +14,20 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.0.9]
+
+### Added
+- Added `IsZeroer` interface to allow custom types to report that they are not initialized. A structs field is not serialized if the `omitempty` struct tag is set and `IsZero()` returns true. #32
+
+### Fixed
+- Ensure `Fold` can be called when a value is given by value, but the `Folder` interface is implemented on the pointer type. #32
+
+## [0.0.8]
+
+### Added
+
+- Add optional support to JSON encoder to encode a NaN or Inf floating point value to  null. (PR #28)
+
 ## [0.0.7]
 
 ### Fixed
@@ -60,7 +74,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix invalid pointer indirections in struct to array/map.
 
-[Unreleased]: https://github.com/elastic/go-structform/compare/v0.0.7...HEAD
+[Unreleased]: https://github.com/elastic/go-structform/compare/v0.0.9...HEAD
+[0.0.9]: https://github.com/elastic/go-structform/compare/v0.0.8...v0.0.9
+[0.0.8]: https://github.com/elastic/go-structform/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/elastic/go-structform/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/elastic/go-structform/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/elastic/go-structform/compare/v0.0.4...v0.0.5

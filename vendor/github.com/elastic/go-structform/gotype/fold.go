@@ -39,6 +39,13 @@ type Folder interface {
 	Fold(structform.ExtVisitor) error
 }
 
+// IsZeroer interface allows custom types to be reported as empty.
+// If the `omitempty` struct tag option is set and the custom type implements
+// IsZero(), which returns true, then the field will not be reported.
+type IsZeroer interface {
+	IsZero() bool
+}
+
 type foldContext struct {
 	visitor
 	userReg map[reflect.Type]reFoldFn

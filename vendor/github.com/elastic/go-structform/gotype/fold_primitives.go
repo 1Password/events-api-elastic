@@ -55,5 +55,15 @@ func reFoldFloat64(C *foldContext, v reflect.Value) error { return C.OnFloat64(v
 func reFoldString(C *foldContext, v reflect.Value) error  { return C.OnString(v.String()) }
 
 func reFoldFolderIfc(C *foldContext, v reflect.Value) error {
-	return v.Interface().(Folder).Fold(C.visitor)
+	if implementsFolder(v.Type()) {
+		return v.Interface().(Folder).Fold(C.visitor)
+	}
+
+	if v.CanAddr() {
+		return reFoldFolderIfc(C, v.Addr())
+	}
+
+	tmp := reflect.New(v.Type())
+	tmp.Elem().Set(v)
+	return reFoldFolderIfc(C, tmp)
 }

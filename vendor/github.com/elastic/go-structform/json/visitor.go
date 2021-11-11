@@ -37,7 +37,8 @@ type Visitor struct {
 	first   boolStack
 	inArray boolStack
 
-	escapeSet []bool
+	escapeSet          []bool
+	ignoreInvalidFloat bool
 }
 
 type boolStack struct {
@@ -90,6 +91,13 @@ func (v *Visitor) SetEscapeHTML(b bool) {
 	} else {
 		v.escapeSet = jsonEscapeSet[:]
 	}
+}
+
+// SetIgnoreInvalidFloat configures how the visitor handles undefined floating point values like NaN or Inf.
+// By default the visitor will error. This behavior is similar to setting SetIgnoreInvalidFloat(false).
+// If true is passed, then invalid floating point values will be replaces with the `null` symbol.
+func (v *Visitor) SetIgnoreInvalidFloat(b bool) {
+	v.ignoreInvalidFloat = b
 }
 
 func (vs *Visitor) writeByte(b byte) error {
@@ -413,7 +421,10 @@ func (vs *Visitor) onFloat(f float64, bits int) error {
 	}
 
 	if math.IsInf(f, 0) || math.IsNaN(f) {
-		return fmt.Errorf("unsupported float value: %v", f)
+		if !vs.ignoreInvalidFloat {
+			return fmt.Errorf("unsupported float value: %v", f)
+		}
+		return vs.w.write(nullSymbol)
 	}
 
 	b := strconv.AppendFloat(vs.scratch[:0], f, 'g', -1, bits)

@@ -37,6 +37,10 @@ type multiErrValue struct {
 	causes []error
 }
 
+type errorReporter interface {
+	report(verbose bool) string
+}
+
 type ctxValBuf strings.Builder
 
 func (e *errValue) At() (string, int) {
@@ -54,27 +58,8 @@ func (e *errValue) Context() *diag.Context {
 	return diag.NewContext(e.ctx, nil)
 }
 
-func (e *errValue) Error() string {
-	return e.report(false)
-}
-
-func (e *errValue) Format(st fmt.State, c rune) {
-	switch c {
-	case 'v':
-		if st.Flag('+') {
-			io.WriteString(st, e.report(true))
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(st, e.report(false))
-	case 'q':
-		io.WriteString(st, fmt.Sprintf("%q", e.report(false)))
-	default:
-		panic("unsupported format directive")
-	}
-}
-
+func (e *errValue) Error() string               { return errorString(e) }
+func (e *errValue) Format(st fmt.State, c rune) { formatErrReporter(e, st, c) }
 func (e *errValue) report(verbose bool) string {
 	buf := &strings.Builder{}
 
@@ -98,37 +83,18 @@ func (e *errValue) report(verbose bool) string {
 	return buf.String()
 }
 
-func (e *wrappedErrValue) Error() string {
-	return e.report(false)
-}
-
 func (e *wrappedErrValue) Unwrap() error {
 	return e.cause
 }
 
-func (e *wrappedErrValue) Format(st fmt.State, c rune) {
-	switch c {
-	case 'v':
-		if st.Flag('+') {
-			io.WriteString(st, e.report(true))
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(st, e.report(false))
-	case 'q':
-		io.WriteString(st, fmt.Sprintf("%q", e.report(false)))
-	default:
-		panic("unsupported format directive")
-	}
-}
-
+func (e *wrappedErrValue) Error() string               { return errorString(e) }
+func (e *wrappedErrValue) Format(st fmt.State, c rune) { formatErrReporter(e, st, c) }
 func (e *wrappedErrValue) report(verbose bool) string {
+	const sep = ": "
+
 	buf := &strings.Builder{}
 	buf.WriteString(e.errValue.report(verbose))
-	sep := ": "
-	if verbose && e.cause != nil {
-		sep = "\n\t"
+	if e.cause != nil {
 		putSubErr(buf, sep, e.cause, verbose)
 	}
 	return buf.String()
@@ -141,10 +107,7 @@ func (e *multiErrValue) Unwrap() error {
 	return e.Cause(0)
 }
 
-func (e *multiErrValue) NumCauses() int {
-	return len(e.causes)
-}
-
+func (e *multiErrValue) NumCauses() int { return len(e.causes) }
 func (e *multiErrValue) Cause(i int) error {
 	if i < len(e.causes) {
 		return e.causes[i]
@@ -152,32 +115,15 @@ func (e *multiErrValue) Cause(i int) error {
 	return nil
 }
 
-func (e *multiErrValue) Format(s fmt.State, c rune) {
-	switch c {
-	case 'v':
-		if s.Flag('+') {
-			io.WriteString(s, e.report(true))
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, e.report(false))
-	case 'q':
-		io.WriteString(s, fmt.Sprintf("%q", e.report(false)))
-	default:
-		panic("unsupported format directive")
-	}
-}
-
+func (e *multiErrValue) Error() string               { return e.report(false) }
+func (e *multiErrValue) Format(st fmt.State, c rune) { formatErrReporter(e, st, c) }
 func (e *multiErrValue) report(verbose bool) string {
+	const sep = "\n\t"
+
 	buf := &strings.Builder{}
 	buf.WriteString(e.errValue.report(verbose))
-	sep := ": "
-	if verbose {
-		for _, cause := range e.causes {
-			sep = "\n\t"
-			putSubErr(buf, sep, cause, verbose)
-		}
+	for _, cause := range e.causes {
+		putSubErr(buf, sep, cause, verbose)
 	}
 	return buf.String()
 }
@@ -197,6 +143,27 @@ func (b *ctxValBuf) OnValue(key string, v diag.Value) (err error) {
 		_, err = fmt.Fprintf((*strings.Builder)(b), "%v=%v", key, val)
 	})
 	return err
+}
+
+func errorString(reporter errorReporter) string {
+	return reporter.report(false)
+}
+
+func formatErrReporter(reporter errorReporter, st fmt.State, c rune) {
+	switch c {
+	case 'v':
+		if st.Flag('+') {
+			io.WriteString(st, reporter.report(true))
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(st, reporter.report(false))
+	case 'q':
+		io.WriteString(st, fmt.Sprintf("%q", reporter.report(false)))
+	default:
+		panic("unsupported format directive")
+	}
 }
 
 func pad(buf *strings.Builder, pattern string) bool {

@@ -47,6 +47,10 @@ type Client struct {
 	Port int64 `ecs:"port"`
 
 	// MAC address of the client.
+	// The notation format from RFC 7042 is suggested: Each octet (that is,
+	// 8-bit byte) is represented by two [uppercase] hexadecimal digits giving
+	// the value of the octet as an unsigned integer. Successive octets are
+	// separated by a hyphen.
 	MAC string `ecs:"mac"`
 
 	// Client domain.
@@ -69,6 +73,17 @@ type Client struct {
 	// simply taking the last label will not work well for effective TLDs such
 	// as "co.uk".
 	TopLevelDomain string `ecs:"top_level_domain"`
+
+	// The subdomain portion of a fully qualified domain name includes all of
+	// the names except the host name under the registered_domain.  In a
+	// partially qualified domain, or if the the qualification level of the
+	// full name cannot be determined, subdomain contains all of the names
+	// below the registered domain.
+	// For example the subdomain portion of "www.east.mydomain.co.uk" is
+	// "east". If the domain has multiple levels of subdomain, such as
+	// "sub2.sub1.example.com", the subdomain field should contain "sub2.sub1",
+	// with no trailing period.
+	Subdomain string `ecs:"subdomain"`
 
 	// Bytes sent from the client to the server.
 	Bytes int64 `ecs:"bytes"`
