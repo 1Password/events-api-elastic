@@ -12,9 +12,11 @@ require (
 // Please read the following links for more information:
 // https://github.com/elastic/beats/issues/21188
 // https://www.elastic.co/guide/en/beats/devguide/current/newbeat-migrate-gomodules.html#newbeat-migrate-gomodules
+// The github.com/poy/eachers replacement is an addition in this repository
 replace (
 	github.com/Microsoft/go-winio => github.com/bi-zone/go-winio v0.4.15
 	github.com/Shopify/sarama => github.com/elastic/sarama v1.19.1-0.20210120173147-5c8cb347d877
+	github.com/apoydence/eachers => github.com/poy/eachers v0.0.0-20181020210610-23942921fe77 // GitHub user renamed
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.11
 	github.com/cucumber/godog => github.com/cucumber/godog v0.8.1
 	github.com/docker/docker => github.com/docker/engine v0.0.0-20191113042239-ea84732a7725
