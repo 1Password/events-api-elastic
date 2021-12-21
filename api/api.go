@@ -71,6 +71,7 @@ type ItemUsage struct {
 	UsedVersion     uint32          `json:"used_version"`
 	VaultUUID       string          `json:"vault_uuid"`
 	ItemUUID        string          `json:"item_uuid"`
+	Action          string          `json:"action"`
 	ItemUsageUser   ItemUsageUser   `json:"user"`
 	ItemUsageClient ItemUsageClient `json:"client"`
 }

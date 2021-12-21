@@ -11,7 +11,7 @@ var emptyMap = map[string]struct{}{}
 
 func (i *SignInAttempt) BeatEvent() *beat.Event {
 	var details interface{} = emptyMap
-	if i.Details == nil {
+	if i.Details != nil {
 		details = i.Details
 	}
 	e := &beat.Event{
@@ -55,6 +55,9 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
+			"event": ECSEvent{
+				Action: i.Action,
+			},
 			"user": ECSUser{
 				ID:       i.ItemUsageUser.UUID,
 				FullName: i.ItemUsageUser.Name,
