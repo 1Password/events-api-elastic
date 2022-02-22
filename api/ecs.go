@@ -14,6 +14,18 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 	if i.Details != nil {
 		details = i.Details
 	}
+	var geo interface{} = emptyMap
+	if i.SignInAttemptLocation != nil {
+		geo = ECSGeo{
+			Country: i.SignInAttemptLocation.Country,
+			Region:  i.SignInAttemptLocation.Region,
+			City:    i.SignInAttemptLocation.City,
+			Location: ECSGeoPoint{
+				Latitude:  i.SignInAttemptLocation.Latitude,
+				Longitude: i.SignInAttemptLocation.Longitude,
+			},
+		}
+	}
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
@@ -32,6 +44,7 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 			"source": ECSSource{
 				IP: i.SignInAttemptClient.IPAddress,
 			},
+			"geo": geo,
 			CustomFieldSet: common.MapStr{
 				"uuid":         i.UUID,
 				"session_uuid": i.SessionUUID,
@@ -52,6 +65,18 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 }
 
 func (i *ItemUsage) BeatEvent() *beat.Event {
+	var geo interface{} = emptyMap
+	if i.ItemUsageLocation != nil {
+		geo = ECSGeo{
+			Country: i.ItemUsageLocation.Country,
+			Region:  i.ItemUsageLocation.Region,
+			City:    i.ItemUsageLocation.City,
+			Location: ECSGeoPoint{
+				Latitude:  i.ItemUsageLocation.Latitude,
+				Longitude: i.ItemUsageLocation.Longitude,
+			},
+		}
+	}
 	e := &beat.Event{
 		Timestamp: i.Timestamp,
 		Fields: common.MapStr{
@@ -70,6 +95,7 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 			"source": ECSSource{
 				IP: i.ItemUsageClient.IPAddress,
 			},
+			"geo": geo,
 			CustomFieldSet: common.MapStr{
 				"uuid":         i.UUID,
 				"used_version": i.UsedVersion,
@@ -105,4 +131,16 @@ type ECSOs struct {
 
 type ECSSource struct {
 	IP string `json:"ip,omitempty" ecs:"ip"`
+}
+
+type ECSGeo struct {
+	Country  string      `json:"country_iso_code" ecs:"country_iso_code"`
+	Region   string      `json:"region_name" ecs:"region_name"`
+	City     string      `json:"city_name" ecs:"city_name"`
+	Location ECSGeoPoint `json:"location" ecs:"location"`
+}
+
+type ECSGeoPoint struct {
+	Latitude  float64 `json:"lat" ecs:"lat"`
+	Longitude float64 `json:"lon" ecs:"lon"`
 }
