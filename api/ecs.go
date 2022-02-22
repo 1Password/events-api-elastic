@@ -14,9 +14,9 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 	if i.Details != nil {
 		details = i.Details
 	}
-	var geo interface{} = emptyMap
+	var geo *ECSGeo
 	if i.SignInAttemptLocation != nil {
-		geo = ECSGeo{
+		geo = &ECSGeo{
 			Country: i.SignInAttemptLocation.Country,
 			Region:  i.SignInAttemptLocation.Region,
 			City:    i.SignInAttemptLocation.City,
@@ -42,9 +42,9 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 				Version: i.SignInAttemptClient.OSVersion,
 			},
 			"source": ECSSource{
-				IP: i.SignInAttemptClient.IPAddress,
+				IP:  i.SignInAttemptClient.IPAddress,
+				Geo: geo,
 			},
-			"geo": geo,
 			CustomFieldSet: common.MapStr{
 				"uuid":         i.UUID,
 				"session_uuid": i.SessionUUID,
@@ -65,9 +65,9 @@ func (i *SignInAttempt) BeatEvent() *beat.Event {
 }
 
 func (i *ItemUsage) BeatEvent() *beat.Event {
-	var geo interface{} = emptyMap
+	var geo *ECSGeo
 	if i.ItemUsageLocation != nil {
-		geo = ECSGeo{
+		geo = &ECSGeo{
 			Country: i.ItemUsageLocation.Country,
 			Region:  i.ItemUsageLocation.Region,
 			City:    i.ItemUsageLocation.City,
@@ -93,9 +93,9 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 				Version: i.ItemUsageClient.OSVersion,
 			},
 			"source": ECSSource{
-				IP: i.ItemUsageClient.IPAddress,
+				IP:  i.ItemUsageClient.IPAddress,
+				Geo: geo,
 			},
-			"geo": geo,
 			CustomFieldSet: common.MapStr{
 				"uuid":         i.UUID,
 				"used_version": i.UsedVersion,
@@ -130,7 +130,8 @@ type ECSOs struct {
 }
 
 type ECSSource struct {
-	IP string `json:"ip,omitempty" ecs:"ip"`
+	IP  string  `json:"ip,omitempty" ecs:"ip"`
+	Geo *ECSGeo `json:"geo,omitempty" ecs:"geo"`
 }
 
 type ECSGeo struct {
