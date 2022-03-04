@@ -55,7 +55,7 @@ Elastic Common Schema
 | `geo.country_iso_code`                | The country code of the event. Uses the ISO 3166 standard                                                                                                 | keyword   |
 | `geo.region_name`                     | The region name of the event                                                                                                                              | keyword   |
 | `geo.city_name`                       | The city name of the event                                                                                                                                | keyword   |
-| `geo.location`                        | The longitutde and latitude of the event                                                                                                                  | geo_point |
+| `geo.location`                        | The longitude and latitude of the event                                                                                                                   | geo_point |
 | `onepassword.uuid`                    | The UUID of the event                                                                                                                                     | keyword   |
 | `onepassword.session_uuid`            | The UUID of the session that created the event                                                                                                            | keyword   |
 | `onepassword.type`                    | Details about the sign-in attempt                                                                                                                         | keyword   |
