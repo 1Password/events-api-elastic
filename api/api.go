@@ -37,6 +37,7 @@ type SignInAttempt struct {
 	Details                 *SignInAttemptDetails   `json:"details"`
 	SignInAttemptTargetUser SignInAttemptTargetUser `json:"target_user"`
 	SignInAttemptClient     SignInAttemptClient     `json:"client"`
+	SignInAttemptLocation   *SignInAttemptLocation  `json:"location"`
 }
 
 type SignInAttemptDetails struct {
@@ -59,6 +60,14 @@ type SignInAttemptClient struct {
 	IPAddress       string `json:"ip_address"`
 }
 
+type SignInAttemptLocation struct {
+	Country   string  `json:"country"`
+	Region    string  `json:"region"`
+	City      string  `json:"city"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 type ItemUsageResponse struct {
 	Cursor  string      `json:"cursor"`
 	HasMore bool        `json:"has_more"`
@@ -66,14 +75,15 @@ type ItemUsageResponse struct {
 }
 
 type ItemUsage struct {
-	UUID            string          `json:"uuid"`
-	Timestamp       time.Time       `json:"timestamp"`
-	UsedVersion     uint32          `json:"used_version"`
-	VaultUUID       string          `json:"vault_uuid"`
-	ItemUUID        string          `json:"item_uuid"`
-	Action          string          `json:"action"`
-	ItemUsageUser   ItemUsageUser   `json:"user"`
-	ItemUsageClient ItemUsageClient `json:"client"`
+	UUID              string             `json:"uuid"`
+	Timestamp         time.Time          `json:"timestamp"`
+	UsedVersion       uint32             `json:"used_version"`
+	VaultUUID         string             `json:"vault_uuid"`
+	ItemUUID          string             `json:"item_uuid"`
+	Action            string             `json:"action"`
+	ItemUsageUser     ItemUsageUser      `json:"user"`
+	ItemUsageClient   ItemUsageClient    `json:"client"`
+	ItemUsageLocation *ItemUsageLocation `json:"location"`
 }
 
 type ItemUsageUser struct {
@@ -90,6 +100,14 @@ type ItemUsageClient struct {
 	OSName          string `json:"os_name"`
 	OSVersion       string `json:"os_version"`
 	IPAddress       string `json:"ip_address"`
+}
+
+type ItemUsageLocation struct {
+	Country   string  `json:"country"`
+	Region    string  `json:"region"`
+	City      string  `json:"city"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 type IntrospectResponse struct {
