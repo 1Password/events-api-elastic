@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -116,8 +117,24 @@ type IntrospectResponse struct {
 	Features []string  `json:"Features"`
 }
 
+// RetryPolicyWithContextErrors is similar to DefaultRetryPolicy, except that
+// we want to retry on context.DeadlineExceeded.
+func RetryPolicyWithContextErrors(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if ctx.Err() != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return true, nil
+		} else {
+			return false, ctx.Err()
+		}
+	}
+
+	return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
+}
+
 func NewClient(logger retryablehttp.LeveledLogger, insecureSkipVerify bool) (*Client, error) {
 	retryHTTPClient := retryablehttp.NewClient()
+	retryHTTPClient.RetryMax = 1000000
+	retryHTTPClient.CheckRetry = RetryPolicyWithContextErrors
 	retryHTTPClient.Logger = logger
 	if httpTransport, ok := retryHTTPClient.HTTPClient.Transport.(*http.Transport); insecureSkipVerify && ok {
 		httpTransport.TLSClientConfig = &tls.Config{
