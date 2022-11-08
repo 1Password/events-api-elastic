@@ -18,6 +18,7 @@ const AudienceDEPRECATED = "com.1password.streamingservice"
 
 const ItemUsageFeatureScope = "itemusages"
 const SignInAttemptsFeatureScope = "signinattempts"
+const AuditEventsFeatureScope = "auditevents"
 
 func ParseJWTClaims(token string) (*JWTClaims, error) {
 	t, err := jwt.ParseSigned(token)

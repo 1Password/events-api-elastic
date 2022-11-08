@@ -14,6 +14,13 @@ eventsapibeat:
     cursor_state_file: "itemusages.eventsapibeatstate"
     starting_cursor: >
       { "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }
+  audit_events:
+    enabled: true
+    auth_token: ""
+    sample_frequency: "10s"
+    cursor_state_file: "auditevents.eventsapibeatstate"
+    starting_cursor: >
+      { "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }
 
 #output.logstash:
 #  hosts: ["localhost:5044"]
