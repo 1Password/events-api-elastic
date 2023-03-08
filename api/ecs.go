@@ -144,6 +144,7 @@ func (i *AuditEvent) BeatEvent() *beat.Event {
 				"uuid":        i.UUID,
 				"object_type": i.ObjectType,
 				"object_uuid": i.ObjectUUID,
+				"aux_id":      i.AuxID,
 				"aux_uuid":    i.AuxUUID,
 				"aux_info":    i.AuxInfo,
 				"session": common.MapStr{

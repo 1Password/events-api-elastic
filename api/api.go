@@ -118,6 +118,7 @@ type AuditEvent struct {
 	Action     string    `json:"action"`
 	ObjectType string    `json:"object_type"`
 	ObjectUUID string    `json:"object_uuid"`
+	AuxID      int64     `json:"aux_id,omitempty"`
 	AuxUUID    string    `json:"aux_uuid,omitempty"`
 	AuxInfo    string    `json:"aux_info,omitempty"`
 
