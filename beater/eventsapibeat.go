@@ -336,6 +336,11 @@ func (e *EventsAPIBeat) Stop() {
 			e.log.Errorf("failed to close item usages cursor state file: %w", err)
 		}
 	}
+	if e.auditEventsCursorStore != nil {
+		if err := e.auditEventsCursorStore.Close(); err != nil {
+			e.log.Errorf("failed to close audit events cursor state file: %w", err)
+		}
+	}
 	err := e.beatClient.Close()
 	if err != nil {
 		e.log.Error(err)
