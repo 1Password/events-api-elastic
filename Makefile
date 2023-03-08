@@ -13,7 +13,7 @@ clean:
 build_all_apps: clean ## Clean, builds then packages all elastic beats binaries
 	@go mod download
 	@go mod vendor
-	@gox -arch="amd64 arm" -os="linux windows freebsd openbsd" -osarch="darwin/amd64" -output="bin/{{.OS}}_{{.Arch}}/eventsapibeat" -ldflags "-s $(VERSION_LDFLAGS)" .
+	@gox -arch="amd64 arm arm64" -os="linux windows freebsd openbsd" -osarch="darwin/amd64" -output="bin/{{.OS}}_{{.Arch}}/eventsapibeat" -ldflags "-s $(VERSION_LDFLAGS)" .
 	@for d in bin/*/; do cp -a eventsapibeat-sample.yml $${d}; cp -a logstash-sample.conf $${d}; done
 	@cd bin && for d in */; do \
   		COPYFILE_DISABLE=1 tar --exclude='.DS_Store' --exclude='.gitignore' --exclude='.travis.yml' -cvzf "eventsapibeat_$(VERSION)_$${d%/}.tar.gz" $${d}; \
