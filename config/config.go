@@ -9,6 +9,7 @@ type Config struct {
 	InsecureSkipVerify bool        `config:"insecure_skip_verify"`
 	SignInAttempts     EventConfig `config:"signin_attempts"`
 	ItemUsages         EventConfig `config:"item_usages"`
+	AuditEvents        EventConfig `config:"audit_events"`
 }
 
 func (c *Config) Validate() error {
@@ -17,6 +18,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.ItemUsages.Validate(); err != nil {
 		return fmt.Errorf("invalid item_usages. %w", err)
+	}
+	if err := c.AuditEvents.Validate(); err != nil {
+		return fmt.Errorf("invalid audit_events. %w", err)
 	}
 	return nil
 }
@@ -35,6 +39,13 @@ var DefaultConfig = Config{
 		AuthToken:       "",
 		StartingCursor:  `{ "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }`,
 		CursorStateFile: "eventsapibeat_itemusages.state",
+		SampleFrequency: 10 * time.Second,
+	},
+	AuditEvents: EventConfig{
+		Enabled:         false,
+		AuthToken:       "",
+		StartingCursor:  `{ "limit": 1000, "start_time": "2020-01-01T00:00:00Z" }`,
+		CursorStateFile: "eventsapibeat_auditevents.state",
 		SampleFrequency: 10 * time.Second,
 	},
 }

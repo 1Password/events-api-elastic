@@ -1,23 +1,20 @@
-Eventsapibeat
-=============
+# Eventsapibeat
 
-Eventsapibeat is the open source libbeat based data shipper for pulling events from the 1Password Events API.  
+Eventsapibeat is the open source libbeat based data shipper for pulling events from the 1Password Events API.
 This beat will fetch successful and failed sign-in attempts and items usage data from public 1Password Events API.
 
-Installation
-------------
+## Installation
 
-Download the latest binaries from [the releases page](https://github.com/1Password/events-api-elastic/releases/latest).  
-Or build from sources, *resulting binary will be located at 'bin' folder*:
+Download the latest binaries from [the releases page](https://github.com/1Password/events-api-elastic/releases/latest).
+Or build from sources, _resulting binary will be located at 'bin' folder_:
 
 ```shell
 make eventsapibeat
 ```
 
-Configuration
--------------
+## Configuration
 
-Rename the sample configuration file *eventsapibeat-sample.yml* to *eventsapibeat.yml*.
+Rename the sample configuration file _eventsapibeat-sample.yml_ to _eventsapibeat.yml_.
 
 Create a [1Password Events Reporting](https://support.1password.com/events-reporting-elastic/) integration for your account and configure the `auth_token`.
 
@@ -26,19 +23,19 @@ signin_attempts:
   auth_token: "token"
 item_usages:
   auth_token: "token"
+audit_events:
+  auth_token: "token"
 ```
 
 Configure the remaining options and set your output as usual.
 
-Run
----
+## Run
 
 ```
 ./eventsapibeat -c eventsapibeat.yml -e
 ```
 
-Elastic Common Schema
----------------------
+## Elastic Common Schema
 
 ### Sign-in Attempts fields
 
@@ -90,3 +87,21 @@ Elastic Common Schema
 | `onepassword.client.app_version`      | The version number of the 1Password app                                                                                                                   | keyword   |
 | `onepassword.client.platform_name`    | The name of the platform the item was accessed from                                                                                                       | keyword   |
 | `onepassword.client.platform_version` | The version of the browser or computer where the 1Password app is installed, or the CPU of the machine where the 1Password command-line tool is installed | keyword   |
+
+### Audit Events fields
+
+| Field                              | Description                                                        | Type    |
+| ---------------------------------- | ------------------------------------------------------------------ | ------- |
+| `@timestamp`                       | The date and time of the audit event. Uses the RFC 3339 standard.  | date    |
+| `event.action`                     | Details about the action taken for the audit event.                | keyword |
+| `user.id`                          | The UUID of the user that performed the audit event.               | keyword |
+| `source.ip`                        | The IP address that performed the audit event.                     | ip      |
+| `onepassword.uuid`                 | The UUID of the audit event.                                       | keyword |
+| `onepassword.object_type`          | The target object type of the audit event.                         | keyword |
+| `onepassword.object_uuid`          | The target object UUID of the audit event.                         | keyword |
+| `onepassword.aux_id`               | Any auxiliary ID of the audit event.                               | long    |
+| `onepassword.aux_uuid`             | Any auxiliary UUID of the audit event.                             | keyword |
+| `onepassword.aux_info`             | Any auxiliary info of the audit event.                             | keyword |
+| `onepassword.session.session_uuid` | The UUID of the user session that performed the audit event.       | keyword |
+| `onepassword.session.device_uuid`  | The UUID of the device that performed the audit event.             | keyword |
+| `onepassword.session.login_time`   | The login time of the user session that performed the audit event. | date    |

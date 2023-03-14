@@ -114,6 +114,51 @@ func (i *ItemUsage) BeatEvent() *beat.Event {
 	return e
 }
 
+func (i *AuditEvent) BeatEvent() *beat.Event {
+	var geo *ECSGeo
+	if i.Location != nil {
+		geo = &ECSGeo{
+			Country: i.Location.Country,
+			Region:  i.Location.Region,
+			City:    i.Location.City,
+			Location: ECSGeoPoint{
+				Latitude:  i.Location.Latitude,
+				Longitude: i.Location.Longitude,
+			},
+		}
+	}
+	e := &beat.Event{
+		Timestamp: i.Timestamp,
+		Fields: common.MapStr{
+			"event": ECSEvent{
+				Action: i.Action,
+			},
+			"user": ECSUser{
+				ID: i.ActorUUID,
+			},
+			"source": ECSSource{
+				IP:  i.Session.IP,
+				Geo: geo,
+			},
+			CustomFieldSet: common.MapStr{
+				"uuid":        i.UUID,
+				"object_type": i.ObjectType,
+				"object_uuid": i.ObjectUUID,
+				"aux_id":      i.AuxID,
+				"aux_uuid":    i.AuxUUID,
+				"aux_info":    i.AuxInfo,
+				"session": common.MapStr{
+					"session_uuid": i.Session.UUID,
+					"device_uuid":  i.Session.DeviceUUID,
+					"login_time":   i.Session.LoginTime,
+				},
+			},
+		},
+	}
+
+	return e
+}
+
 type ECSEvent struct {
 	Action string `json:"action,omitempty" ecs:"action"`
 }

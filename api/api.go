@@ -111,6 +111,42 @@ type ItemUsageLocation struct {
 	Longitude float64 `json:"longitude"`
 }
 
+type AuditEvent struct {
+	UUID       string    `json:"uuid"`
+	Timestamp  time.Time `json:"timestamp"`
+	ActorUUID  string    `json:"actor_uuid"`
+	Action     string    `json:"action"`
+	ObjectType string    `json:"object_type"`
+	ObjectUUID string    `json:"object_uuid"`
+	AuxID      int64     `json:"aux_id,omitempty"`
+	AuxUUID    string    `json:"aux_uuid,omitempty"`
+	AuxInfo    string    `json:"aux_info,omitempty"`
+
+	Session  AuditEventSession   `json:"session"`
+	Location *AuditEventLocation `json:"location,omitempty"`
+}
+
+type AuditEventSession struct {
+	UUID       string    `json:"uuid"`
+	LoginTime  time.Time `json:"login_time"`
+	DeviceUUID string    `json:"device_uuid"`
+	IP         string    `json:"ip"`
+}
+
+type AuditEventLocation struct {
+	Country   string  `json:"country,omitempty"`
+	Region    string  `json:"region,omitempty"`
+	City      string  `json:"city,omitempty"`
+	Latitude  float64 `json:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty"`
+}
+
+type AuditEventsResponse struct {
+	Cursor      string       `json:"cursor"`
+	HasMore     bool         `json:"has_more"`
+	AuditEvents []AuditEvent `json:"items"`
+}
+
 type IntrospectResponse struct {
 	UUID     string    `json:"UUID"`
 	IssuedAt time.Time `json:"IssuedAt"`
@@ -223,6 +259,30 @@ func (c *Client) ItemUsages(ctx context.Context, bearerToken string, cursor stri
 	}
 
 	return &itemUsageResponse, nil
+}
+
+func (c *Client) AuditEvents(ctx context.Context, bearerToken string, cursor string) (*AuditEventsResponse, error) {
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/auditevents", strings.NewReader(cursor))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new API request. %w", err)
+	}
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected status code: %s", response.Status)
+	}
+
+	var auditEventsResponse AuditEventsResponse
+	err = json.NewDecoder(response.Body).Decode(&auditEventsResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response. %w", err)
+	}
+
+	return &auditEventsResponse, nil
 }
 
 func (c *Client) newAPIRequest(ctx context.Context, method string, bearerToken string, path string, body io.Reader) (*http.Request, error) {

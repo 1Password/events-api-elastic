@@ -21,6 +21,7 @@ const (
 	BeatName           = "eventsapibeat"
 	SignInAttemptsType = "signinattempts"
 	ItemUsagesType     = "itemusages"
+	AuditEventsType    = "auditevents"
 )
 
 type EventsAPIBeat struct {
@@ -33,6 +34,7 @@ type EventsAPIBeat struct {
 	cancel                    context.CancelFunc
 	signInAttemptsCursorStore store.CursorStore
 	itemUsagesCursorStore     store.CursorStore
+	auditEventsCursorStore    store.CursorStore
 	apiClient                 *api.Client
 }
 
@@ -73,6 +75,13 @@ func New(_ *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 		eventsAPIBeat.itemUsagesCursorStore, err = store.NewCursorHistoryFileStore(eventsAPIBeat.config.ItemUsages.CursorStateFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open item usages cursor file. %w", err)
+		}
+	}
+
+	if eventsAPIBeat.config.AuditEvents.Enabled {
+		eventsAPIBeat.auditEventsCursorStore, err = store.NewCursorHistoryFileStore(eventsAPIBeat.config.AuditEvents.CursorStateFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open audit events cursor file. %w", err)
 		}
 	}
 
@@ -124,6 +133,24 @@ func (e *EventsAPIBeat) Run(b *beat.Beat) error {
 			err := e.itemUsagesLoop(eventsChan)
 			if err != nil {
 				errorChan <- fmt.Errorf("failed when processing item usages. %v", err)
+			}
+		}()
+	}
+
+	if e.config.AuditEvents.Enabled {
+		e.log.Info("Starting audit events loop")
+		jwt, err := utils.ParseJWTClaims(e.config.AuditEvents.AuthToken)
+		if err != nil {
+			return err
+		}
+
+		if !jwt.Features.Contains(utils.AuditEventsFeatureScope) {
+			return errors.New("audit events token does not have audit events feature")
+		}
+		go func() {
+			err := e.auditEventsLoop(eventsChan)
+			if err != nil {
+				errorChan <- fmt.Errorf("failed when processing audit events. %v", err)
 			}
 		}()
 	}
@@ -245,6 +272,58 @@ func (e *EventsAPIBeat) itemUsagesLoop(c chan<- *beat.Event) error {
 	}
 }
 
+func (e *EventsAPIBeat) auditEventsLoop(c chan<- *beat.Event) error {
+	ticker := time.NewTicker(e.config.AuditEvents.SampleFrequency)
+	defer ticker.Stop()
+
+	cursor, err := e.auditEventsCursorStore.GetValue()
+	if err != nil {
+		return fmt.Errorf("failed to get audit events cursor. %v", err)
+	}
+	if cursor == "" {
+		cursor = e.config.AuditEvents.StartingCursor
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			var errs []string
+
+			for {
+				auditEventsResponse, err := e.apiClient.AuditEvents(e.ctx, e.config.AuditEvents.AuthToken, cursor)
+				if err != nil {
+					errs = append(errs, fmt.Sprintf("failed to fetch audit events. %v", err))
+					break
+				}
+
+				for i := range auditEventsResponse.AuditEvents {
+					item := &auditEventsResponse.AuditEvents[i]
+
+					event := item.BeatEvent()
+					_, _ = event.PutValue("@metadata.event_type", AuditEventsType)
+
+					c <- event
+				}
+
+				cursor = fmt.Sprintf(`{ "cursor": "%s" }`, auditEventsResponse.Cursor)
+
+				if err := e.auditEventsCursorStore.SetValue(cursor); err != nil {
+					errs = append(errs, fmt.Sprintf("failed to set audit events cursor. %v", err))
+				}
+
+				if !auditEventsResponse.HasMore {
+					break
+				}
+
+			}
+
+			if len(errs) > 0 {
+				return fmt.Errorf(strings.Join(errs, "."))
+			}
+		}
+	}
+}
+
 func (e *EventsAPIBeat) Stop() {
 	e.cancel()
 	if e.signInAttemptsCursorStore != nil {
@@ -255,6 +334,11 @@ func (e *EventsAPIBeat) Stop() {
 	if e.itemUsagesCursorStore != nil {
 		if err := e.itemUsagesCursorStore.Close(); err != nil {
 			e.log.Errorf("failed to close item usages cursor state file: %w", err)
+		}
+	}
+	if e.auditEventsCursorStore != nil {
+		if err := e.auditEventsCursorStore.Close(); err != nil {
+			e.log.Errorf("failed to close audit events cursor state file: %w", err)
 		}
 	}
 	err := e.beatClient.Close()
