@@ -14,6 +14,25 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.8.6]
+
+### Added
+- Added new ReplaceArrValues Option to replace arrays and merge maps. #193
+
+## [0.8.5]
+
+### Added
+- Added new parse.Config flag to disable using commas to imply arrays. #192
+
+### Changed
+- The parse.NoopConfig disables using commas to imply arrays by default. #192
+
+## [0.8.4]
+
+### Fixed
+- Fixed panic on zero Value while processing a collection of interfaces. #159
+- Preserve empty arrays when reifying #188
+
 ## [0.8.3]
 
 ### Added
@@ -268,7 +287,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Introduced CHANGELOG.md for documenting changes to ucfg.
 
 
-[Unreleased]: https://github.com/elastic/go-ucfg/compare/v0.8.3...HEAD
+[Unreleased]: https://github.com/elastic/go-ucfg/compare/v0.8.4...HEAD
+[0.8.4]: https://github.com/elastic/go-ucfg/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/elastic/go-ucfg/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/elastic/go-ucfg/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/elastic/go-ucfg/compare/v0.8.0...v0.8.1

@@ -1,9 +1,12 @@
 # go-seccomp-bpf
 
-[![Build Status](http://img.shields.io/travis/elastic/go-seccomp-bpf.svg?style=flat-square)][travis]
+[![Build Status](https://beats-ci.elastic.co/job/Library/job/go-seccomp-bpf-mbp/job/master/badge/icon)](https://beats-ci.elastic.co/job/Library/job/go-seccomp-bpf-mbp/job/master/)
+[![Go Report
+Card](https://goreportcard.com/badge/github.com/elastic/go-seccomp-bpf)](https://goreportcard.com/report/github.com/elastic/go-seccomp-bpf)
+[![Contributors](https://img.shields.io/github/contributors/elastic/go-seccomp-bpf.svg)](https://github.com/elastic/go-seccomp-bpf/graphs/contributors)
+[![GitHub release](https://img.shields.io/github/release/elastic/go-seccomp-bpf.svg?label=changelog)](https://github.com/elastic/go-seccomp-bpf/releases/latest)
 [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 
-[travis]:   http://travis-ci.org/elastic/go-seccomp-bpf
 [godocs]:   http://godoc.org/github.com/elastic/go-seccomp-bpf
 
 go-seccomp-bpf is a library for Go (golang) for loading a system call filter on
@@ -39,7 +42,7 @@ program is generated based on a filter policy created by you.
 
 - System call argument filtering is not implemented. (Pull requests are
   welcomed. See #1.)
-- System call tables are only implemented for 386, amd64, and arm.
+- System call tables are only implemented for 386, amd64, arm and arm64.
   (More system call table generation code should be added to
   [arch/mk_syscalls_linux.go](./arch/mk_syscalls_linux.go).)
 
