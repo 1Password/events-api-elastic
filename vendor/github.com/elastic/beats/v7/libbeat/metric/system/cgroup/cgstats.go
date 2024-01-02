@@ -18,13 +18,13 @@
 package cgroup
 
 import (
-	"runtime"
 	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/elastic/beats/v7/libbeat/common"
 	"github.com/elastic/beats/v7/libbeat/common/transform/typeconv"
+	"github.com/elastic/beats/v7/libbeat/metric/system/numcpu"
 	"github.com/elastic/beats/v7/libbeat/opt"
 )
 
@@ -40,7 +40,7 @@ func (stat StatsV1) CGVersion() CgroupsVersion {
 	return CgroupsV1
 }
 
-//Format converts the stats object to a MapStr that can be sent to Report()
+// Format converts the stats object to a MapStr that can be sent to Report()
 func (stat StatsV1) Format() (common.MapStr, error) {
 	to := common.MapStr{}
 	err := typeconv.Convert(&to, stat)
@@ -69,13 +69,11 @@ func (curStat *StatsV1) FillPercentages(prev CGStats, curTime, prevTime time.Tim
 	totalCPUDeltaNanos := int64(curStat.CPUAccounting.Total.NS - prevStat.CPUAccounting.Total.NS)
 
 	pct := float64(totalCPUDeltaNanos) / float64(timeDeltaNanos)
-	// Avoid using NumCPU unless we need to; the values in UsagePerCPU are more likely to reflect the running conditions of the cgroup
-	// NumCPU can vary based on the conditions of the running metricbeat process, as it uses Affinity Masks, not hardware data.
 	var cpuCount int
 	if len(curStat.CPUAccounting.UsagePerCPU) > 0 {
 		cpuCount = len(curStat.CPUAccounting.UsagePerCPU)
 	} else {
-		cpuCount = runtime.NumCPU()
+		cpuCount = numcpu.NumCPU()
 	}
 
 	// if you look at the raw cgroup stats, the following normalized value is literally an average of per-cpu numbers.
@@ -98,7 +96,7 @@ func (curStat *StatsV1) FillPercentages(prev CGStats, curTime, prevTime time.Tim
 
 }
 
-//Format converts the stats object to a MapStr that can be sent to Report()
+// Format converts the stats object to a MapStr that can be sent to Report()
 func (stat StatsV2) Format() (common.MapStr, error) {
 	to := common.MapStr{}
 	err := typeconv.Convert(&to, stat)
@@ -132,7 +130,7 @@ func (curStat *StatsV2) FillPercentages(prev CGStats, curTime, prevTime time.Tim
 
 	pct := float64(totalCPUDeltaNanos) / float64(timeDeltaNanos)
 
-	cpuCount := runtime.NumCPU()
+	cpuCount := numcpu.NumCPU()
 
 	// if you look at the raw cgroup stats, the following normalized value is literally an average of per-cpu numbers.
 	normalizedPct := pct / float64(cpuCount)

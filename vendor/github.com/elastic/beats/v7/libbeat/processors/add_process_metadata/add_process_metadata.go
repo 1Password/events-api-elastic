@@ -35,9 +35,11 @@ import (
 )
 
 const (
-	processorName      = "add_process_metadata"
-	cacheExpiration    = time.Second * 30
-	containerIDMapping = "container.id"
+	processorName       = "add_process_metadata"
+	cacheExpiration     = time.Second * 30
+	cacheCapacity       = 32 << 10 // maximum number of process cache entries.
+	cacheEvictionEffort = 10       // number of entries to sample for expiry eviction.
+	containerIDMapping  = "container.id"
 )
 
 var (
@@ -48,7 +50,7 @@ var (
 	// ErrNoProcess is returned when metadata for a process can't be collected.
 	ErrNoProcess = errors.New("process not found")
 
-	procCache = newProcessCache(cacheExpiration, gosysinfoProvider{})
+	procCache = newProcessCache(cacheExpiration, cacheCapacity, cacheEvictionEffort, gosysinfoProvider{})
 
 	processCgroupPaths = cgroup.ProcessCgroupPaths
 
@@ -111,7 +113,6 @@ func newProcessMetadataProcessorWithProvider(cfg *common.Config, provider proces
 	}
 
 	mappings, err := config.getMappings()
-
 	if err != nil {
 		return nil, errors.Wrapf(err, "error unpacking %v.target_fields", processorName)
 	}
@@ -138,7 +139,6 @@ func newProcessMetadataProcessorWithProvider(cfg *common.Config, provider proces
 		} else {
 			p.cidProvider = newCidProvider(config.HostPath, config.CgroupPrefixes, config.CgroupRegex, processCgroupPaths, nil)
 		}
-
 	}
 
 	if withCache {
@@ -310,6 +310,9 @@ func (p *processMetadata) toMap() common.MapStr {
 			"env":        p.env,
 			"pid":        p.pid,
 			"ppid":       p.ppid,
+			"parent": common.MapStr{
+				"pid": p.ppid,
+			},
 			"start_time": p.startTime,
 		},
 	}

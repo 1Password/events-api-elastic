@@ -27,14 +27,14 @@ var (
 	defaultEncodeDuration = zapcore.NanosDurationEncoder
 	defaultEncodeLevel    = zapcore.LowercaseLevelEncoder
 	defaultEncodeCaller   = ShortCallerEncoder
-	defaultEncodeTime     = zapcore.ISO8601TimeEncoder
 
 	callerKey     = "log.origin"
 	logLevelKey   = "log.level"
 	logNameKey    = "log.logger"
 	messageKey    = "message"
-	stacktraceKey = "log.origin.stacktrace"
+	stackTraceKey = "log.origin.stack_trace"
 	timeKey       = "@timestamp"
+	encodeTime    = zapcore.ISO8601TimeEncoder
 )
 
 // EncoderConfig exports all non ECS related configurable settings.
@@ -45,8 +45,8 @@ type EncoderConfig struct {
 	// used for serialization.
 	EnableName bool `json:"enableName" yaml:"enableName"`
 
-	// EnableStacktrace controls if a stacktrace should be serialized when available.
-	EnableStacktrace bool `json:"enableStacktrace" yaml:"enableStacktrace"`
+	// EnableStackTrace controls if a stack trace should be serialized when available.
+	EnableStackTrace bool `json:"enableStackTrace" yaml:"enableStackTrace"`
 
 	// EnableCaller controls if the entry caller should be serialized.
 	// If enabled, the EncodeCaller configuration is used for serialization.
@@ -68,9 +68,6 @@ type EncoderConfig struct {
 	// EncodeCaller defines how an entry caller should be serialized.
 	// It will only be applied if EnableCaller is set to true.
 	EncodeCaller CallerEncoder `json:"callerEncoder" yaml:"callerEncoder"`
-
-	// EncodeTime defines how the log timestamp should be serialized
-	EncodeTime zapcore.TimeEncoder `json:"timeEncoder" yaml:"timeEncoder"`
 }
 
 // NewDefaultEncoderConfig returns an EncoderConfig with default settings.
@@ -78,7 +75,7 @@ func NewDefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		EnableName:       true,
 		EnableCaller:     true,
-		EnableStacktrace: true,
+		EnableStackTrace: true,
 		LineEnding:       defaultLineEnding,
 		EncodeName:       defaultEncodeName,
 		EncodeLevel:      defaultEncodeLevel,
@@ -94,14 +91,11 @@ func (cfg EncoderConfig) ToZapCoreEncoderConfig() zapcore.EncoderConfig {
 		MessageKey:     messageKey,
 		LevelKey:       logLevelKey,
 		TimeKey:        timeKey,
-		EncodeTime:     cfg.EncodeTime,
+		EncodeTime:     encodeTime,
 		LineEnding:     cfg.LineEnding,
 		EncodeDuration: cfg.EncodeDuration,
 		EncodeName:     cfg.EncodeName,
 		EncodeLevel:    cfg.EncodeLevel,
-	}
-	if encCfg.EncodeTime == nil {
-		encCfg.EncodeTime = defaultEncodeTime
 	}
 	if encCfg.EncodeDuration == nil {
 		encCfg.EncodeDuration = defaultEncodeDuration
@@ -112,8 +106,8 @@ func (cfg EncoderConfig) ToZapCoreEncoderConfig() zapcore.EncoderConfig {
 			encCfg.EncodeName = defaultEncodeName
 		}
 	}
-	if cfg.EnableStacktrace {
-		encCfg.StacktraceKey = stacktraceKey
+	if cfg.EnableStackTrace {
+		encCfg.StacktraceKey = stackTraceKey
 	}
 	if cfg.EnableCaller {
 		encCfg.CallerKey = callerKey
@@ -150,16 +144,15 @@ func ECSCompatibleEncoderConfig(cfg zapcore.EncoderConfig) zapcore.EncoderConfig
 	// as zap omits these log attributes when keys are not defined
 	// and ecszap does not intend to change this logic
 	if cfg.StacktraceKey != "" {
-		cfg.StacktraceKey = stacktraceKey
+		cfg.StacktraceKey = stackTraceKey
 	}
 	if cfg.CallerKey != "" {
 		cfg.CallerKey = callerKey
 		cfg.EncodeCaller = defaultEncodeCaller
 	}
+	// always set the time encoding to the ISO8601 time format
+	cfg.EncodeTime = encodeTime
 	// ensure all required encoders are set
-	if cfg.EncodeTime == nil {
-		cfg.EncodeTime = defaultEncodeTime
-	}
 	if cfg.EncodeDuration == nil {
 		cfg.EncodeDuration = defaultEncodeDuration
 	}

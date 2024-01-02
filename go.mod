@@ -3,7 +3,7 @@ module go.1password.io/eventsapibeat
 go 1.15
 
 require (
-	github.com/elastic/beats/v7 v7.15.1
+	github.com/elastic/beats/v7 v7.17.16
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )

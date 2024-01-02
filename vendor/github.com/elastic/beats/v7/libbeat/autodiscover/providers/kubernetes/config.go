@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//go:build linux || darwin || windows
 // +build linux darwin windows
 
 package kubernetes
@@ -57,16 +58,17 @@ type Config struct {
 	AddResourceMetadata *metadata.AddResourceMetadataConfig `config:"add_resource_metadata"`
 }
 
-// Public variable, so specific beats (as Filebeat) can set a different cleanup timeout if they need it.
+// DefaultCleanupTimeout Public variable, so specific beats (as Filebeat) can set a different cleanup timeout if they need it.
 var DefaultCleanupTimeout time.Duration = 0
 
 func defaultConfig() *Config {
 	return &Config{
-		SyncPeriod:     10 * time.Minute,
-		Resource:       "pod",
-		CleanupTimeout: DefaultCleanupTimeout,
-		Prefix:         "co.elastic",
-		Unique:         false,
+		SyncPeriod:          10 * time.Minute,
+		Resource:            "pod",
+		CleanupTimeout:      DefaultCleanupTimeout,
+		Prefix:              "co.elastic",
+		Unique:              false,
+		AddResourceMetadata: metadata.GetDefaultResourceMetadataConfig(),
 	}
 }
 

@@ -65,6 +65,7 @@ func makeES(
 	}
 
 	if proxyURL := config.Transport.Proxy.URL; proxyURL != nil && !config.Transport.Proxy.Disable {
+		log.Debugf("breaking down proxy URL. Scheme: '%s', host[:port]: '%s', path: '%s'", proxyURL.Scheme, proxyURL.Host, proxyURL.Path)
 		log.Infof("Using proxy URL: %s", proxyURL)
 	}
 
@@ -92,6 +93,7 @@ func makeES(
 		client, err = NewClient(ClientSettings{
 			ConnectionSettings: eslegclient.ConnectionSettings{
 				URL:              esURL,
+				Beatname:         beat.Beat,
 				Kerberos:         config.Kerberos,
 				Username:         config.Username,
 				Password:         config.Password,
