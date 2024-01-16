@@ -14,11 +14,12 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20170221213301-9f32b5905fd6 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/containerd/containerd v1.5.13 // indirect
+	github.com/containerd/containerd v1.5.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/dlclark/regexp2 v1.1.7-0.20171009020623-7632a260cbaf // indirect
-	github.com/docker/distribution v2.8.0+incompatible // indirect
-	github.com/docker/docker v1.4.2-0.20190924003213-a8608b5b67c7 // indirect
+	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dop251/goja v0.0.0-20200831102558-9af81ddcf0e1 // indirect
@@ -96,12 +97,12 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
