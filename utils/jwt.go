@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 type Features []string
@@ -21,7 +22,7 @@ const SignInAttemptsFeatureScope = "signinattempts"
 const AuditEventsFeatureScope = "auditevents"
 
 func ParseJWTClaims(token string) (*JWTClaims, error) {
-	t, err := jwt.ParseSigned(token)
+	t, err := jwt.ParseSigned(token, []jose.SignatureAlgorithm{jose.ES256})
 
 	if err != nil {
 		return nil, err
