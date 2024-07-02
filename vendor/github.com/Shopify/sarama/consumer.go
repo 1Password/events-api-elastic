@@ -303,6 +303,8 @@ type partitionConsumer struct {
 	errors   chan *ConsumerError
 	feeder   chan *FetchResponse
 
+	preferredReadReplica int32
+
 	trigger, dying chan none
 	closeOnce      sync.Once
 	topic          string
@@ -363,18 +365,29 @@ func (child *partitionConsumer) dispatcher() {
 	close(child.feeder)
 }
 
+func (child *partitionConsumer) preferredBroker() (*Broker, error) {
+	if child.preferredReadReplica >= 0 {
+		broker, err := child.consumer.client.Broker(child.preferredReadReplica)
+		if err == nil {
+			return broker, nil
+		}
+	}
+
+	// if prefered replica cannot be found fallback to leader
+	return child.consumer.client.Leader(child.topic, child.partition)
+}
+
 func (child *partitionConsumer) dispatch() error {
 	if err := child.consumer.client.RefreshMetadata(child.topic); err != nil {
 		return err
 	}
 
-	var leader *Broker
-	var err error
-	if leader, err = child.consumer.client.Leader(child.topic, child.partition); err != nil {
+	broker, err := child.preferredBroker()
+	if err != nil {
 		return err
 	}
 
-	child.broker = child.consumer.refBrokerConsumer(leader)
+	child.broker = child.consumer.refBrokerConsumer(broker)
 
 	child.broker.input <- child
 
@@ -455,9 +468,7 @@ feederLoop:
 		}
 
 		for i, msg := range msgs {
-			for _, interceptor := range child.conf.Consumer.Interceptors {
-				msg.safelyApplyInterceptor(interceptor)
-			}
+			child.interceptors(msg)
 		messageSelect:
 			select {
 			case <-child.dying:
@@ -471,6 +482,7 @@ feederLoop:
 					child.broker.acks.Done()
 				remainingLoop:
 					for _, msg = range msgs[i:] {
+						child.interceptors(msg)
 						select {
 						case child.messages <- msg:
 						case <-child.dying:
@@ -593,6 +605,8 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 
 	consumerBatchSizeMetric.Update(int64(nRecs))
 
+	child.preferredReadReplica = block.PreferredReadReplica
+
 	if nRecs == 0 {
 		partialTrailingMessage, err := block.isPartial()
 		if err != nil {
@@ -700,6 +714,12 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 	return messages, nil
 }
 
+func (child *partitionConsumer) interceptors(msg *ConsumerMessage) {
+	for _, interceptor := range child.conf.Consumer.Interceptors {
+		msg.safelyApplyInterceptor(interceptor)
+	}
+}
+
 type brokerConsumer struct {
 	consumer         *consumer
 	broker           *Broker
@@ -768,7 +788,7 @@ done:
 	close(bc.newSubscriptions)
 }
 
-//subscriptionConsumer ensures we will get nil right away if no new subscriptions is available
+// subscriptionConsumer ensures we will get nil right away if no new subscriptions is available
 func (bc *brokerConsumer) subscriptionConsumer() {
 	<-bc.wait // wait for our first piece of work
 
@@ -783,7 +803,6 @@ func (bc *brokerConsumer) subscriptionConsumer() {
 		}
 
 		response, err := bc.fetchNewMessages()
-
 		if err != nil {
 			Logger.Printf("consumer/broker/%d disconnecting due to error processing FetchRequest: %s\n", bc.broker.ID(), err)
 			bc.abort(err)
@@ -817,15 +836,27 @@ func (bc *brokerConsumer) updateSubscriptions(newSubscriptions []*partitionConsu
 	}
 }
 
-//handleResponses handles the response codes left for us by our subscriptions, and abandons ones that have been closed
+// handleResponses handles the response codes left for us by our subscriptions, and abandons ones that have been closed
 func (bc *brokerConsumer) handleResponses() {
 	for child := range bc.subscriptions {
 		result := child.responseResult
 		child.responseResult = nil
 
+		if result == nil {
+			if preferredBroker, err := child.preferredBroker(); err == nil {
+				if bc.broker.ID() != preferredBroker.ID() {
+					// not an error but needs redispatching to consume from prefered replica
+					child.trigger <- none{}
+					delete(bc.subscriptions, child)
+				}
+			}
+			continue
+		}
+
+		// Discard any replica preference.
+		child.preferredReadReplica = -1
+
 		switch result {
-		case nil:
-			// no-op
 		case errTimedOut:
 			Logger.Printf("consumer/broker/%d abandoned subscription to %s/%d because consuming was taking too long\n",
 				bc.broker.ID(), child.topic, child.partition)
