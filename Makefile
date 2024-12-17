@@ -1,4 +1,4 @@
-VERSION := 2.8.0
+VERSION := 2.8.1
 VERSION_LDFLAGS="-X=go.1password.io/eventsapibeat/version.Version=$(VERSION)"
 
 .PHONY: eventsapibeat
