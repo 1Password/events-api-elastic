@@ -81,6 +81,7 @@ type ItemUsage struct {
 	UsedVersion       uint32             `json:"used_version"`
 	VaultUUID         string             `json:"vault_uuid"`
 	ItemUUID          string             `json:"item_uuid"`
+	AccountUUID       string             `json:"account_uuid"`
 	Action            string             `json:"action"`
 	ItemUsageUser     ItemUsageUser      `json:"user"`
 	ItemUsageClient   ItemUsageClient    `json:"client"`
@@ -112,15 +113,18 @@ type ItemUsageLocation struct {
 }
 
 type AuditEvent struct {
-	UUID       string    `json:"uuid"`
-	Timestamp  time.Time `json:"timestamp"`
-	ActorUUID  string    `json:"actor_uuid"`
-	Action     string    `json:"action"`
-	ObjectType string    `json:"object_type"`
-	ObjectUUID string    `json:"object_uuid"`
-	AuxID      int64     `json:"aux_id,omitempty"`
-	AuxUUID    string    `json:"aux_uuid,omitempty"`
-	AuxInfo    string    `json:"aux_info,omitempty"`
+	UUID             string    `json:"uuid"`
+	Timestamp        time.Time `json:"timestamp"`
+	ActorUUID        string    `json:"actor_uuid"`
+	ActorType        string    `json:"actor_type"`
+	ActorAccountUUID string    `json:"actor_account_uuid"`
+	AccountUUID      string    `json:"account_uuid"`
+	Action           string    `json:"action"`
+	ObjectType       string    `json:"object_type"`
+	ObjectUUID       string    `json:"object_uuid"`
+	AuxID            int64     `json:"aux_id,omitempty"`
+	AuxUUID          string    `json:"aux_uuid,omitempty"`
+	AuxInfo          string    `json:"aux_info,omitempty"`
 
 	Session  AuditEventSession   `json:"session"`
 	Location *AuditEventLocation `json:"location,omitempty"`
@@ -214,7 +218,7 @@ func (c *Client) Introspect(ctx context.Context, bearerToken string) (*Introspec
 }
 
 func (c *Client) SignInAttempts(ctx context.Context, bearerToken string, cursor string) (*SignInAttemptResponse, error) {
-	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/signinattempts", strings.NewReader(cursor))
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v2/signinattempts", strings.NewReader(cursor))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new API request. %w", err)
 	}
@@ -238,7 +242,7 @@ func (c *Client) SignInAttempts(ctx context.Context, bearerToken string, cursor 
 }
 
 func (c *Client) ItemUsages(ctx context.Context, bearerToken string, cursor string) (*ItemUsageResponse, error) {
-	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/itemusages", strings.NewReader(cursor))
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v2/itemusages", strings.NewReader(cursor))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new API request. %w", err)
 	}
@@ -262,7 +266,7 @@ func (c *Client) ItemUsages(ctx context.Context, bearerToken string, cursor stri
 }
 
 func (c *Client) AuditEvents(ctx context.Context, bearerToken string, cursor string) (*AuditEventsResponse, error) {
-	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v1/auditevents", strings.NewReader(cursor))
+	request, err := c.newAPIRequest(ctx, http.MethodPost, bearerToken, "/api/v2/auditevents", strings.NewReader(cursor))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new API request. %w", err)
 	}
