@@ -1,8 +1,6 @@
 module go.1password.io/eventsapibeat
 
-go 1.21
-
-toolchain go1.21.8
+go 1.26.10
 
 require (
 	github.com/elastic/beats/v7 v7.17.22
